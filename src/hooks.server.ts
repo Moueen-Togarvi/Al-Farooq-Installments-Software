@@ -29,7 +29,16 @@ export const handle: Handle = async ({ event, resolve }) => {
             });
         }
 
-        return resolve(event);
+        const response = await resolve(event);
+
+        // Security / Bug Bounty Headers
+        response.headers.set('X-Frame-Options', 'DENY'); // Prevent clickjacking
+        response.headers.set('X-Content-Type-Options', 'nosniff'); // Prevent MIME-sniffing
+        response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains'); // Enforce HTTPS
+        response.headers.set('X-XSS-Protection', '1; mode=block'); // Legacy XSS Protection (SvelteKit escapes by default)
+
+        return response;
     } catch (err: any) {
         // Re-throw SvelteKit redirects and failures
         if (err.status && (err.location || err.data)) throw err;

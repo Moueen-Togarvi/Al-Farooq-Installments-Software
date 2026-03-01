@@ -30,22 +30,37 @@
 	const remainingBalance = $derived(totalAmount - downPayment);
 	const monthlyAmount = $derived(duration > 0 ? remainingBalance / duration : 0);
 
-	// Generate preview schedule
-	const schedulePreview = $derived.by(() => {
-		if (!selectedProduct || !startDate) return [];
-		const schedule = [];
-		const start = new Date(startDate);
-		for (let i = 1; i <= Math.min(duration, 12); i++) {
-			const dueDate = new Date(start);
-			dueDate.setMonth(dueDate.getMonth() + i);
-			schedule.push({
-				serial: i,
-				date: dueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-				amount: monthlyAmount
-			});
+	let customSchedule = $state<{serial: number, date: string, amount: number}[]>([]);
+	let manuallyEdited = $state(false);
+
+	$effect(() => {
+		// Only auto-generate if the user hasn't started manually overriding amounts/dates
+		if (selectedProduct && startDate && !manuallyEdited) {
+			let newSchedule = [];
+			const start = new Date(startDate);
+			const limit = Math.min(duration, 36);
+			for (let i = 1; i <= limit; i++) {
+				const dueDate = new Date(start);
+				dueDate.setMonth(dueDate.getMonth() + i);
+				newSchedule.push({
+					serial: i,
+					date: dueDate.toISOString().split('T')[0],
+					amount: Math.round(monthlyAmount)
+				});
+			}
+			customSchedule = newSchedule;
 		}
-		return schedule;
 	});
+
+	function handleManualEdit() {
+		manuallyEdited = true;
+	}
+
+	function resetSchedule() {
+		manuallyEdited = false;
+		// Re-trigger the $effect by forcing a read
+		const _ = startDate + monthlyAmount;
+	}
 
 	function formatCurrency(amount: number) {
 		return new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', minimumFractionDigits: 0 }).format(amount);
@@ -173,7 +188,7 @@
 						/>
 					</div>
 					<div class="space-y-4">
-						<label for="downPayment" class="text-sm font-black text-slate-800 ml-1 uppercase tracking-widest">Down Payment</label>
+						<label for="downPayment" class="text-sm font-black text-slate-800 ml-1 uppercase tracking-widest">Advance Payment</label>
 						<input 
 							type="number" 
 							name="downPayment" 
@@ -198,7 +213,7 @@
 						<span class="text-xl font-black">{formatCurrency(totalAmount)}</span>
 					</div>
 					<div class="flex justify-between items-center">
-						<span class="text-xs font-bold text-blue-200 uppercase tracking-widest">Down Payment</span>
+						<span class="text-xs font-bold text-blue-200 uppercase tracking-widest">Advance Payment</span>
 						<span class="text-md font-black">-{formatCurrency(downPayment)}</span>
 					</div>
 					<div class="flex justify-between items-center border-t border-blue-500/50 pt-6">
@@ -220,24 +235,73 @@
 				</button>
 			</div>
 
-			<!-- Schedule Preview -->
-			{#if schedulePreview.length > 0}
-				<div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-					<h3 class="text-sm font-black text-slate-800 uppercase tracking-[0.1em] mb-6 flex items-center gap-2">
-						<Calendar class="w-4 h-4 text-blue-500" />
-						First {schedulePreview.length} Installments
-					</h3>
-					<div class="space-y-4">
-						{#each schedulePreview as item}
-							<div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-transparent hover:border-blue-100 transition-colors">
-								<div>
-									<p class="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Month {item.serial}</p>
-									<p class="text-xs font-bold text-slate-700">{item.date}</p>
+			<!-- Custom Schedule JSON -->
+			<input type="hidden" name="customSchedule" value={JSON.stringify(customSchedule)} />
+
+			<!-- Schedule Editor -->
+			{#if customSchedule.length > 0}
+				<div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 mb-8">
+					<div class="flex items-center justify-between mb-6">
+						<h3 class="text-sm font-black text-slate-800 uppercase tracking-[0.1em] flex items-center gap-2">
+							<Calendar class="w-4 h-4 text-blue-500" />
+							Installment Schedule ({customSchedule.length} Months)
+						</h3>
+						{#if manuallyEdited}
+							<button 
+								type="button" 
+								onclick={resetSchedule}
+								class="px-3 py-1.5 bg-blue-50/50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors border border-blue-100"
+							>
+								Reset Auto-Calc
+							</button>
+						{/if}
+					</div>
+					
+					<div class="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+						{#each customSchedule as item, i}
+							<div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border {manuallyEdited ? 'border-amber-200 bg-amber-50/10' : 'border-transparent'} transition-colors">
+								<div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center font-black text-slate-400 shrink-0 shadow-sm">
+									{item.serial}
 								</div>
-								<span class="text-xs font-black text-blue-600">{formatCurrency(item.amount)}</span>
+								<div class="flex-1">
+									<p class="text-[10px] font-black text-slate-400 uppercase leading-none mb-1.5">Due Date</p>
+									<input 
+										type="date" 
+										bind:value={customSchedule[i].date}
+										oninput={handleManualEdit}
+										class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+									/>
+								</div>
+								<div class="flex-1">
+									<p class="text-[10px] font-black text-slate-400 uppercase leading-none mb-1.5 justify-end flex">Amount (Rs)</p>
+									<input 
+										type="number" 
+										bind:value={customSchedule[i].amount}
+										oninput={handleManualEdit}
+										class="w-full text-right bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-blue-600 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+									/>
+								</div>
 							</div>
 						{/each}
 					</div>
+					
+					<!-- Validation warning if sum mismatches balance -->
+					{#if Math.abs(customSchedule.reduce((sum, item) => sum + Number(item.amount), 0) - remainingBalance) > 10}
+						<div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
+							<AlertCircle class="w-5 h-5 text-amber-500 shrink-0" />
+							<div>
+								<p class="text-xs font-bold text-amber-800 uppercase tracking-wide">Schedule Mismatch</p>
+								<p class="text-xs text-amber-600 mt-1">
+									The sum of all installments ({formatCurrency(customSchedule.reduce((sum, item) => sum + Number(item.amount), 0))}) 
+									does not match the Balance to Pay ({formatCurrency(remainingBalance)}). Please adjust the amounts.
+								</p>
+							</div>
+						</div>
+					{:else if manuallyEdited}
+						<div class="mt-4 p-3 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-bold flex items-center gap-2 border border-emerald-100">
+							<CheckCircle2 class="w-4 h-4" /> Customized schedule matches balance!
+						</div>
+					{/if}
 				</div>
 			{/if}
 		</div>

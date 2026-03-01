@@ -45,6 +45,43 @@ export const actions: Actions = {
         return { success: true };
     },
 
+    update: async ({ request, url }) => {
+        const id = url.searchParams.get('id');
+        if (!id) return fail(400, { error: 'Missing customer id' });
+
+        const data = await request.formData();
+        const name = data.get('name') as string;
+        const cnic = data.get('cnic') as string;
+        const mobile = data.get('mobile') as string;
+        const address = data.get('address') as string;
+        const referenceName = data.get('referenceName') as string;
+        const status = data.get('status') as string;
+
+        if (!name || !cnic || !mobile || !address) {
+            return fail(400, { error: 'Missing required fields' });
+        }
+
+        try {
+            await prisma.customer.update({
+                where: { id },
+                data: {
+                    name,
+                    cnic,
+                    mobile,
+                    address,
+                    referenceName: referenceName || null,
+                    status: status || undefined
+                }
+            });
+        } catch (err: any) {
+            console.error(err);
+            if (err.code === 'P2002') return fail(400, { error: 'CNIC already exists' });
+            return fail(500, { error: 'Failed to update customer' });
+        }
+
+        return { success: true };
+    },
+
     delete: async ({ url }) => {
         const id = url.searchParams.get('id');
         if (!id) return fail(400, { error: 'Missing customer id' });
@@ -53,8 +90,11 @@ export const actions: Actions = {
             await prisma.customer.delete({
                 where: { id }
             });
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
+            if (err.code === 'P2003') {
+                return fail(400, { error: 'Cannot delete customer. Active sale records exist.' });
+            }
             return fail(500, { error: 'Failed to delete customer' });
         }
 

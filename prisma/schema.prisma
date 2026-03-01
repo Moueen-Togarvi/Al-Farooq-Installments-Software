@@ -53,6 +53,10 @@ model Customer {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   plans         InstallmentPlan[]
+
+  @@index([name])
+  @@index([mobile])
+  @@index([status])
 }
 
 model Product {
@@ -69,6 +73,9 @@ model Product {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   plans            InstallmentPlan[]
+
+  @@index([name])
+  @@index([category])
 }
 
 model InstallmentPlan {
@@ -84,6 +91,10 @@ model InstallmentPlan {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
   installments     Installment[]
+
+  @@index([customerId])
+  @@index([productId])
+  @@index([status])
 }
 
 model Installment {
@@ -102,6 +113,10 @@ model Installment {
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   payments       Payment[]
+
+  @@index([planId])
+  @@index([dueDate])
+  @@index([status])
 }
 
 model Payment {
@@ -113,4 +128,7 @@ model Payment {
   method        String      @default("CASH")
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+
+  @@index([installmentId])
+  @@index([paymentDate])
 }

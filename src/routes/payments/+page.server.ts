@@ -5,6 +5,7 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async () => {
     const payments = await prisma.payment.findMany({
         orderBy: { paymentDate: 'desc' },
+        take: 200,
         include: {
             installment: {
                 include: {

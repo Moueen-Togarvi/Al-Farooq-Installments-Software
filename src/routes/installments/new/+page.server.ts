@@ -39,6 +39,14 @@ export const actions: Actions = {
             return fail(400, { error: 'Product not found' });
         }
 
+        const customScheduleStr = data.get('customSchedule') as string;
+        let customSchedule: any[] | null = null;
+        if (customScheduleStr) {
+            try {
+                customSchedule = JSON.parse(customScheduleStr);
+            } catch (e) { }
+        }
+
         const totalAmount = parseFloat(product.installmentPrice.toString());
         const remainingBalance = totalAmount - downPayment;
         const monthlyAmount = remainingBalance / durationMonths;
@@ -59,20 +67,36 @@ export const actions: Actions = {
 
                 // Generate installments
                 const installments = [];
-                for (let i = 1; i <= durationMonths; i++) {
-                    const dueDate = new Date(startDate);
-                    dueDate.setMonth(dueDate.getMonth() + i);
+                if (customSchedule && Array.isArray(customSchedule) && customSchedule.length > 0) {
+                    for (const item of customSchedule) {
+                        const dueDate = new Date(item.date);
+                        installments.push({
+                            planId: plan.id,
+                            serialNumber: item.serial,
+                            month: dueDate.getMonth() + 1,
+                            year: dueDate.getFullYear(),
+                            amount: Number(item.amount),
+                            pendingAmount: Number(item.amount),
+                            status: 'UNPAID',
+                            dueDate
+                        });
+                    }
+                } else {
+                    for (let i = 1; i <= durationMonths; i++) {
+                        const dueDate = new Date(startDate);
+                        dueDate.setMonth(dueDate.getMonth() + i);
 
-                    installments.push({
-                        planId: plan.id,
-                        serialNumber: i,
-                        month: dueDate.getMonth() + 1,
-                        year: dueDate.getFullYear(),
-                        amount: monthlyAmount,
-                        pendingAmount: monthlyAmount,
-                        status: 'UNPAID',
-                        dueDate
-                    });
+                        installments.push({
+                            planId: plan.id,
+                            serialNumber: i,
+                            month: dueDate.getMonth() + 1,
+                            year: dueDate.getFullYear(),
+                            amount: monthlyAmount,
+                            pendingAmount: monthlyAmount,
+                            status: 'UNPAID',
+                            dueDate
+                        });
+                    }
                 }
 
                 await tx.installment.createMany({
