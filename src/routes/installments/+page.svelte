@@ -29,10 +29,10 @@
 
 	function getPlanStatusColor(status: string) {
 		switch (status) {
-			case 'ACTIVE': return 'bg-blue-50 text-blue-600 border-blue-100';
-			case 'CLOSED': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-			case 'DEFAULTED': return 'bg-red-50 text-red-600 border-red-100';
-			default: return 'bg-slate-100 text-slate-600 border-slate-200';
+			case 'ACTIVE': return 'bg-gray-100 text-gray-700 border-gray-200';
+			case 'CLOSED': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+			case 'DEFAULTED': return 'bg-red-50 text-red-700 border-red-200';
+			default: return 'bg-white text-gray-500 border-gray-200';
 		}
 	}
 
@@ -47,30 +47,30 @@
 <div class="space-y-6">
 	<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 		<div>
-			<h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Active Installments</h1>
-			<p class="text-sm text-slate-500 font-medium">Monitor ongoing sales and payment progress</p>
+			<h1 class="text-2xl font-bold text-gray-900 tracking-tight">Active Installments</h1>
+			<p class="text-sm text-gray-500 font-medium">Monitor ongoing sales and payment progress</p>
 		</div>
 		<a 
 			href="/installments/new"
-			class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all active:scale-95"
+			class="flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors"
 		>
-			<Plus class="w-5 h-5" />
+			<Plus class="w-4 h-4" />
 			New Sale Plan
 		</a>
 	</div>
 
 	<!-- Search & Filters -->
-	<div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap gap-4">
+	<div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-wrap gap-4">
 		<div class="relative flex-1 min-w-[300px]">
-			<Search class="absolute left-4 inset-y-0 my-auto w-5 h-5 text-slate-400" />
+			<Search class="absolute left-3 inset-y-0 my-auto w-5 h-5 text-gray-400" />
 			<input 
 				type="text" 
 				placeholder="Search by customer, product or plan ID..." 
 				bind:value={searchQuery}
-				class="w-full pl-12 pr-4 py-3 bg-slate-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-700 font-medium h-12"
+				class="w-full pl-10 pr-4 py-2 bg-transparent border-transparent focus:ring-0 transition-all outline-none text-gray-900 font-medium h-10"
 			/>
 		</div>
-		<button class="px-5 py-2.5 bg-slate-50 text-slate-600 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-100 transition-all border border-transparent">
+		<button class="px-4 py-2 bg-gray-50 text-gray-700 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-gray-100 transition-colors border border-gray-200 border-transparent">
 			<Filter class="w-4 h-4" />
 			All Status
 		</button>
@@ -79,92 +79,88 @@
 	<!-- Plan Grid -->
 	<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 		{#each filteredPlans as plan}
-			<div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl transition-all group flex flex-col md:flex-row h-full">
+			<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group flex flex-col md:flex-row h-full">
 				<!-- Left Profile Section -->
-				<div class="p-8 md:w-56 bg-slate-50/50 border-b md:border-b-0 md:border-r border-slate-100 flex flex-col items-center text-center justify-center shrink-0">
-					<div class="w-20 h-20 rounded-3xl bg-white shadow-sm border border-slate-200 flex items-center justify-center font-black text-2xl text-slate-400 mb-4">
+				<div class="p-6 md:w-56 bg-white border-b md:border-b-0 md:border-r border-gray-100 flex flex-col items-center text-center justify-center shrink-0">
+					<div class="w-16 h-16 rounded-full bg-gray-100 shadow-sm border border-gray-200 flex items-center justify-center font-bold text-xl text-gray-600 mb-3">
 						{plan.customer.name.substring(0, 2).toUpperCase()}
 					</div>
-					<h3 class="text-lg font-black text-slate-800 line-clamp-1 leading-tight">{plan.customer.name}</h3>
-					<p class="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2 px-2 py-1 bg-white rounded-lg shadow-sm border border-slate-100">
+					<h3 class="text-base font-bold text-gray-900 line-clamp-1 leading-tight">{plan.customer.name}</h3>
+					<p class="text-xs font-semibold text-gray-500 uppercase tracking-widest mt-1.5 px-2 py-0.5 bg-gray-50 rounded-md border border-gray-200">
 						{plan.product.category}
 					</p>
 				</div>
 
 				<!-- Content Section -->
-				<div class="p-8 flex-1 flex flex-col justify-between">
-					<div class="space-y-6">
+				<div class="p-6 flex-1 flex flex-col justify-between">
+					<div class="space-y-5">
 						<div class="flex items-start justify-between">
 							<div class="space-y-1">
-								<h4 class="text-sm font-black text-slate-400 uppercase tracking-widest leading-none">Purchased Product</h4>
-								<p class="text-lg font-extrabold text-slate-800 leading-tight">{plan.product.name}</p>
+								<h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider leading-none">Purchased Product</h4>
+								<p class="text-base font-bold text-gray-900 leading-tight pt-1">{plan.product.name}</p>
 							</div>
-							<span class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border {getPlanStatusColor(plan.status)} shrink-0">
+							<span class="px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wider border {getPlanStatusColor(plan.status)} shrink-0">
 								{plan.status}
 							</span>
 						</div>
 
-						<div class="grid grid-cols-2 gap-8">
+						<div class="grid grid-cols-2 gap-6">
 							<div class="space-y-1">
-								<p class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Total Amount</p>
-								<p class="text-md font-black text-slate-700">{formatCurrency(plan.totalAmount)}</p>
+								<p class="text-xs font-semibold text-gray-500 uppercase tracking-wider leading-none">Total Amount</p>
+								<p class="text-sm font-bold text-gray-900 pt-1">{formatCurrency(plan.totalAmount)}</p>
 							</div>
 							<div class="space-y-1">
-								<p class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Remaining</p>
-								<p class="text-md font-black text-red-500">{formatCurrency(plan.remainingBalance)}</p>
+								<p class="text-xs font-semibold text-gray-500 uppercase tracking-wider leading-none">Remaining</p>
+								<p class="text-sm font-bold text-red-600 pt-1">{formatCurrency(plan.remainingBalance)}</p>
 							</div>
 						</div>
 
-						<div class="space-y-3">
-							<div class="flex items-center justify-between text-[11px] font-black uppercase tracking-widest">
-								<span class="text-slate-400">Payment Progress</span>
-								<span class="text-slate-800">{calculateProgress(plan)}%</span>
+						<div class="space-y-2 pt-2">
+							<div class="flex items-center justify-between text-xs font-semibold uppercase tracking-wider">
+								<span class="text-gray-500">Payment Progress</span>
+								<span class="text-gray-900">{calculateProgress(plan)}%</span>
 							</div>
-							<div class="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
+							<div class="h-2 w-full bg-gray-100 rounded-full overflow-hidden flex">
 								<div 
-									class="h-full bg-blue-600 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(37,99,235,0.4)]" 
+									class="h-full bg-gray-900 rounded-full transition-all duration-1000" 
 									style="width: {calculateProgress(plan)}%"
 								></div>
 							</div>
 						</div>
 					</div>
 
-					<div class="pt-8 flex items-center justify-between">
-						<div class="flex -space-x-3 overflow-hidden p-1">
+					<div class="pt-6 flex items-center justify-between">
+						<div class="flex -space-x-2 overflow-hidden py-1">
 							{#each plan.installments.slice(0, 5) as inst}
 								<div 
-									class="inline-block h-8 w-8 rounded-xl ring-4 ring-white shadow-sm border border-slate-100 flex items-center justify-center text-[8px] font-black {inst.status === 'PAID' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-300'}"
+									class="inline-block h-8 w-8 rounded-full ring-2 ring-white shadow-sm border border-gray-200 flex items-center justify-center text-[10px] font-bold {inst.status === 'PAID' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-400'}"
 									title="Month {inst.month}"
 								>
 									M{inst.serialNumber}
 								</div>
 							{/each}
 							{#if plan.installments.length > 5}
-								<div class="inline-block h-8 w-8 rounded-xl ring-4 ring-white bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400">
+								<div class="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 border border-gray-200">
 									+{plan.installments.length - 5}
 								</div>
 							{/if}
 						</div>
 						<a 
 							href="/installments/{plan.id}"
-							class="flex items-center gap-2 text-xs font-black text-blue-600 hover:text-blue-700 transition-all uppercase tracking-widest group"
+							class="flex items-center gap-1.5 text-xs font-semibold text-gray-900 hover:text-gray-700 transition-colors uppercase tracking-wider group"
 						>
 							View Ledger
-							<ArrowRight class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+							<ArrowRight class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
 						</a>
 					</div>
 				</div>
 			</div>
 		{:else}
-			<div class="col-span-full py-24 text-center">
-				<div class="flex flex-col items-center gap-4">
-					<div class="bg-slate-50 p-6 rounded-full">
-						<TrendingUp class="w-10 h-10 text-slate-200" />
-					</div>
-					<div class="space-y-1">
-						<p class="text-slate-400 font-bold text-lg">No active installment plans</p>
-						<p class="text-sm text-slate-300 font-medium">Create your first sale to start tracking installments</p>
-					</div>
+			<div class="col-span-full py-16 text-center">
+				<div class="flex flex-col items-center gap-2">
+					<TrendingUp class="w-8 h-8 text-gray-300 mb-2" />
+					<p class="text-gray-900 font-medium text-sm">No active installment plans</p>
+					<p class="text-xs text-gray-500">Create your first sale to start tracking installments</p>
 				</div>
 			</div>
 		{/each}

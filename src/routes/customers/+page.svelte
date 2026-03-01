@@ -27,10 +27,10 @@
 
 	function getStatusColor(status: string) {
 		switch (status) {
-			case 'ACTIVE': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-			case 'CLOSED': return 'bg-slate-100 text-slate-600 border-slate-200';
-			case 'DEFAULTER': return 'bg-red-50 text-red-600 border-red-100';
-			default: return 'bg-slate-100 text-slate-600 border-slate-200';
+			case 'ACTIVE': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+			case 'CLOSED': return 'bg-gray-100 text-gray-700 border-gray-200';
+			case 'DEFAULTER': return 'bg-red-50 text-red-700 border-red-200';
+			default: return 'bg-gray-100 text-gray-700 border-gray-200';
 		}
 	}
 </script>
@@ -38,75 +38,75 @@
 <div class="space-y-6">
 	<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 		<div>
-			<h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Customer Directory</h1>
-			<p class="text-sm text-slate-500 font-medium">Manage and monitor all installment clients</p>
+			<h1 class="text-2xl font-bold text-gray-900 tracking-tight">Customer Directory</h1>
+			<p class="text-sm text-gray-500 font-medium mt-1">Manage and monitor all installment clients</p>
 		</div>
 		<button 
 			onclick={() => showAddModal = true}
-			class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all active:scale-95"
+			class="flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors"
 		>
-			<UserPlus class="w-5 h-5" />
+			<UserPlus class="w-4 h-4" />
 			Add Customer
 		</button>
 	</div>
 
 	<!-- Search & Filters -->
-	<div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+	<div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex items-center gap-4">
 		<div class="relative flex-1">
-			<Search class="absolute left-4 inset-y-0 my-auto w-5 h-5 text-slate-400" />
+			<Search class="absolute left-3 inset-y-0 my-auto w-5 h-5 text-gray-400" />
 			<input 
 				type="text" 
 				placeholder="Search by name, CNIC or mobile..." 
 				bind:value={searchQuery}
-				class="w-full pl-12 pr-4 py-3 bg-slate-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-700 font-medium h-12"
+				class="w-full pl-10 pr-4 py-2 bg-transparent border-transparent focus:ring-0 transition-all outline-none text-gray-900 font-medium h-10"
 			/>
 		</div>
 	</div>
 
 	<!-- Customer Grid/Table -->
-	<div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+	<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
 		<div class="overflow-x-auto">
-			<table class="w-full text-left border-collapse">
+			<table class="w-full text-left border-collapse min-w-[800px]">
 				<thead>
-					<tr class="bg-slate-50/50 border-b border-slate-100">
-						<th class="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Customer Info</th>
-						<th class="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">CNIC & Mobile</th>
-						<th class="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Status</th>
-						<th class="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">Actions</th>
+					<tr class="bg-white border-b border-gray-200">
+						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer Info</th>
+						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">CNIC & Mobile</th>
+						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
 					</tr>
 				</thead>
-				<tbody class="divide-y divide-slate-100">
+				<tbody class="divide-y divide-gray-100">
 					{#each filteredCustomers as customer}
-						<tr class="hover:bg-slate-50/50 transition-colors group">
-							<td class="px-6 py-5">
+						<tr class="hover:bg-gray-50/50 transition-colors group">
+							<td class="px-6 py-4">
 								<div class="flex items-center gap-4">
-									<div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center font-bold text-slate-500 shadow-sm border-2 border-white">
+									<div class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-gray-600 shrink-0">
 										{customer.name.substring(0, 2).toUpperCase()}
 									</div>
 									<div>
-										<p class="font-bold text-slate-800">{customer.name}</p>
-										<p class="text-xs text-slate-400 font-medium">{customer.address}</p>
+										<p class="font-semibold text-gray-900">{customer.name}</p>
+										<p class="text-xs text-gray-500 mt-0.5">{customer.address}</p>
 									</div>
 								</div>
 							</td>
-							<td class="px-6 py-5">
-								<div class="space-y-1">
-									<p class="text-sm font-bold text-slate-700 tracking-tight">{customer.cnic}</p>
-									<p class="text-xs text-slate-500 font-medium">{customer.mobile}</p>
+							<td class="px-6 py-4">
+								<div class="space-y-0.5">
+									<p class="text-sm font-semibold text-gray-900">{customer.cnic}</p>
+									<p class="text-xs text-gray-500">{customer.mobile}</p>
 								</div>
 							</td>
-							<td class="px-6 py-5">
-								<span class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border {getStatusColor(customer.status)}">
+							<td class="px-6 py-4">
+								<span class="px-2.5 py-1 rounded-md text-xs font-semibold border {getStatusColor(customer.status)}">
 									{customer.status}
 								</span>
 							</td>
-							<td class="px-6 py-5">
+							<td class="px-6 py-4">
 								<div class="flex items-center gap-2">
-									<button class="p-2 rounded-lg hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200 text-slate-400 hover:text-blue-600 transition-all">
+									<button class="p-2 rounded-md hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 text-gray-400 hover:text-gray-900 transition-colors">
 										<Edit2 class="w-4 h-4" />
 									</button>
 									<form method="POST" action="?/delete&id={customer.id}" use:enhance>
-										<button class="p-2 rounded-lg hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200 text-slate-400 hover:text-red-500 transition-all">
+										<button class="p-2 rounded-md hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 text-gray-400 hover:text-red-600 transition-colors">
 											<Trash2 class="w-4 h-4" />
 										</button>
 									</form>
@@ -115,13 +115,11 @@
 						</tr>
 					{:else}
 						<tr>
-							<td colspan="4" class="px-6 py-20 text-center">
-								<div class="flex flex-col items-center gap-3">
-									<div class="bg-slate-50 p-4 rounded-full">
-										<Users class="w-8 h-8 text-slate-300" />
-									</div>
-									<p class="text-slate-400 font-bold">No customers found</p>
-									<p class="text-sm text-slate-300 font-medium">Try adding a new customer or adjusting your search</p>
+							<td colspan="4" class="px-6 py-16 text-center">
+								<div class="flex flex-col items-center gap-2">
+									<Users class="w-8 h-8 text-gray-300 mb-2" />
+									<p class="text-gray-900 font-medium text-sm">No customers found</p>
+									<p class="text-xs text-gray-500">Try adding a new customer or adjusting your search</p>
 								</div>
 							</td>
 						</tr>
@@ -134,15 +132,15 @@
 
 <!-- Add Customer Modal -->
 {#if showAddModal}
-	<div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-		<div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
-			<div class="p-8 border-b border-slate-50 flex items-center justify-between bg-white sticky top-0">
-				<h2 class="text-xl font-extrabold text-slate-800">Add New Customer</h2>
+	<div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+		<div class="bg-white w-full max-w-lg rounded-xl shadow-xl border border-gray-200 overflow-hidden transform transition-all">
+			<div class="px-6 py-5 border-b border-gray-200 flex items-center justify-between bg-white sticky top-0">
+				<h2 class="text-lg font-semibold text-gray-900">Add New Customer</h2>
 				<button 
 					onclick={() => showAddModal = false}
-					class="p-2 rounded-xl hover:bg-slate-50 text-slate-400 transition-colors"
+					class="p-2 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
 				>
-					<XCircle class="w-6 h-6" />
+					<XCircle class="w-5 h-5" />
 				</button>
 			</div>
 
@@ -156,53 +154,53 @@
 						}
 					};
 				}}
-				class="p-8 space-y-6 max-h-[70vh] overflow-y-auto"
+				class="p-6 space-y-5 max-h-[70vh] overflow-y-auto"
 			>
 				{#if form?.error}
-					<div class="p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold border border-red-100 flex items-center gap-3">
-						<AlertCircle class="w-5 h-5" />
+					<div class="p-3 bg-red-50 text-red-700 rounded-lg text-sm font-medium border border-red-200 flex items-center gap-2">
+						<AlertCircle class="w-4 h-4 shrink-0" />
 						{form.error}
 					</div>
 				{/if}
 
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-					<div class="space-y-2">
-						<label for="name" class="text-sm font-bold text-slate-700 ml-1">Full Name</label>
-						<input type="text" name="name" id="name" required class="w-full px-4 py-3 bg-slate-50 rounded-xl border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-slate-700" />
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+					<div class="space-y-1.5">
+						<label for="name" class="text-sm font-medium text-gray-700">Full Name</label>
+						<input type="text" name="name" id="name" required class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm" />
 					</div>
-					<div class="space-y-2">
-						<label for="cnic" class="text-sm font-bold text-slate-700 ml-1">CNIC Number</label>
-						<input type="text" name="cnic" id="cnic" placeholder="42101-XXXXXXX-X" required class="w-full px-4 py-3 bg-slate-50 rounded-xl border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-slate-700" />
-					</div>
-				</div>
-
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-					<div class="space-y-2">
-						<label for="mobile" class="text-sm font-bold text-slate-700 ml-1">Mobile Number</label>
-						<input type="text" name="mobile" id="mobile" required class="w-full px-4 py-3 bg-slate-50 rounded-xl border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-slate-700" />
-					</div>
-					<div class="space-y-2">
-						<label for="referenceName" class="text-sm font-bold text-slate-700 ml-1">Reference Name</label>
-						<input type="text" name="referenceName" id="referenceName" class="w-full px-4 py-3 bg-slate-50 rounded-xl border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-slate-700" />
+					<div class="space-y-1.5">
+						<label for="cnic" class="text-sm font-medium text-gray-700">CNIC Number</label>
+						<input type="text" name="cnic" id="cnic" placeholder="42101-XXXXXXX-X" required class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm" />
 					</div>
 				</div>
 
-				<div class="space-y-2">
-					<label for="address" class="text-sm font-bold text-slate-700 ml-1">Resident Address</label>
-					<textarea name="address" id="address" rows="3" required class="w-full px-4 py-3 bg-slate-50 rounded-xl border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-slate-700 resize-none"></textarea>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+					<div class="space-y-1.5">
+						<label for="mobile" class="text-sm font-medium text-gray-700">Mobile Number</label>
+						<input type="text" name="mobile" id="mobile" required class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm" />
+					</div>
+					<div class="space-y-1.5">
+						<label for="referenceName" class="text-sm font-medium text-gray-700">Reference Name</label>
+						<input type="text" name="referenceName" id="referenceName" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm" />
+					</div>
 				</div>
 
-				<div class="flex items-center gap-4 pt-4">
+				<div class="space-y-1.5">
+					<label for="address" class="text-sm font-medium text-gray-700">Resident Address</label>
+					<textarea name="address" id="address" rows="3" required class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm resize-none"></textarea>
+				</div>
+
+				<div class="flex items-center gap-3 pt-4 border-t border-gray-100">
 					<button 
 						type="button"
 						onclick={() => showAddModal = false}
-						class="flex-1 px-6 py-3.5 rounded-2xl bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 transition-all"
+						class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors text-sm"
 					>
 						Cancel
 					</button>
 					<button 
 						type="submit"
-						class="flex-[2] px-6 py-3.5 rounded-2xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all"
+						class="flex-[2] px-4 py-2 rounded-lg bg-gray-900 text-white font-medium shadow-sm hover:bg-gray-800 transition-colors text-sm"
 					>
 						Create Account
 					</button>

@@ -42,27 +42,27 @@
 <div class="space-y-6">
 	<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 		<div>
-			<h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Product Catalog</h1>
-			<p class="text-sm text-slate-500 font-medium">Manage electronics, furniture, and pricing</p>
+			<h1 class="text-2xl font-bold text-gray-900 tracking-tight">Product Catalog</h1>
+			<p class="text-sm text-gray-500 font-medium mt-1">Manage electronics, furniture, and pricing</p>
 		</div>
 		<button 
 			onclick={() => showAddModal = true}
-			class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all active:scale-95"
+			class="flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors"
 		>
-			<PackagePlus class="w-5 h-5" />
+			<PackagePlus class="w-4 h-4" />
 			Add Product
 		</button>
 	</div>
 
 	<!-- Search & Filters -->
-	<div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+	<div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex items-center gap-4">
 		<div class="relative flex-1">
-			<Search class="absolute left-4 inset-y-0 my-auto w-5 h-5 text-slate-400" />
+			<Search class="absolute left-3 inset-y-0 my-auto w-5 h-5 text-gray-400" />
 			<input 
 				type="text" 
 				placeholder="Search products by name or category..." 
 				bind:value={searchQuery}
-				class="w-full pl-12 pr-4 py-3 bg-slate-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-700 font-medium h-12"
+				class="w-full pl-10 pr-4 py-2 bg-transparent border-transparent focus:ring-0 transition-all outline-none text-gray-900 font-medium h-10"
 			/>
 		</div>
 	</div>
@@ -70,18 +70,18 @@
 	<!-- Product Grid -->
 	<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 		{#each filteredProducts as product}
-			<div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl transition-all group flex flex-col">
-				<div class="p-6 space-y-4 flex-1">
+			<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col group">
+				<div class="p-5 space-y-4 flex-1">
 					<div class="flex items-start justify-between">
 						<div class="space-y-1">
-							<span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-wider border border-blue-100">
+							<span class="px-2.5 py-1 rounded-md bg-gray-100 text-gray-600 text-xs font-semibold border border-gray-200">
 								{product.category}
 							</span>
-							<h3 class="text-lg font-extrabold text-slate-800 line-clamp-1">{product.name}</h3>
+							<h3 class="text-lg font-bold text-gray-900 py-1">{product.name}</h3>
 						</div>
 						<div class="flex items-center gap-1">
 							<form method="POST" action="?/delete&id={product.id}" use:enhance>
-								<button class="p-2 rounded-xl hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all">
+								<button class="p-2 rounded-md hover:bg-gray-50 text-gray-400 hover:text-red-600 transition-colors border border-transparent hover:border-gray-200">
 									<Trash2 class="w-4 h-4" />
 								</button>
 							</form>
@@ -89,52 +89,48 @@
 					</div>
 
 					<div class="grid grid-cols-2 gap-4">
-						<div class="bg-slate-50 p-3 rounded-2xl border border-slate-100/50">
-							<p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Cash Price</p>
-							<p class="text-sm font-black text-slate-700">{formatCurrency(product.cashPrice)}</p>
+						<div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+							<p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Cash Price</p>
+							<p class="text-sm font-bold text-gray-900 mt-1">{formatCurrency(product.cashPrice)}</p>
 						</div>
-						<div class="bg-blue-50/50 p-3 rounded-2xl border border-blue-100/30">
-							<p class="text-[10px] font-bold text-blue-400 uppercase tracking-tighter">Installment Price</p>
-							<p class="text-sm font-black text-blue-700">{formatCurrency(product.installmentPrice)}</p>
+						<div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+							<p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Inst. Price</p>
+							<p class="text-sm font-bold text-gray-900 mt-1">{formatCurrency(product.installmentPrice)}</p>
 						</div>
 					</div>
 
-					<div class="space-y-2.5 py-2">
-						<div class="flex justify-between items-center text-xs font-semibold">
-							<span class="text-slate-400">Down Payment</span>
-							<span class="text-slate-700">{formatCurrency(product.downPayment)}</span>
+					<div class="space-y-2 py-2">
+						<div class="flex justify-between items-center text-sm">
+							<span class="text-gray-500 font-medium">Down Payment</span>
+							<span class="text-gray-900 font-semibold">{formatCurrency(product.downPayment)}</span>
 						</div>
-						<div class="flex justify-between items-center text-xs font-semibold">
-							<span class="text-slate-400">Monthly Installment</span>
-							<span class="text-blue-600 font-bold">{formatCurrency(product.monthlyAmount)} / mo</span>
+						<div class="flex justify-between items-center text-sm">
+							<span class="text-gray-500 font-medium">Monthly Installment</span>
+							<span class="text-gray-900 font-semibold">{formatCurrency(product.monthlyAmount)}</span>
 						</div>
-						<div class="flex justify-between items-center text-xs font-semibold">
-							<span class="text-slate-400">Duration</span>
-							<span class="text-slate-700">{product.durationMonths} Months</span>
+						<div class="flex justify-between items-center text-sm">
+							<span class="text-gray-500 font-medium">Duration</span>
+							<span class="text-gray-900 font-semibold">{product.durationMonths} Months</span>
 						</div>
 					</div>
 				</div>
 				
-				<div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+				<div class="px-5 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
 					<div class="flex flex-col">
-						<span class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Profit</span>
-						<span class="text-sm font-black text-emerald-600 leading-none">{formatCurrency(product.profit)}</span>
+						<span class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Total Profit</span>
+						<span class="text-sm font-bold text-gray-900">{formatCurrency(product.profit)}</span>
 					</div>
-					<button class="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm">
+					<button class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
 						Edit Details
 					</button>
 				</div>
 			</div>
 		{:else}
-			<div class="col-span-full py-24 text-center">
-				<div class="flex flex-col items-center gap-4">
-					<div class="bg-slate-50 p-6 rounded-full">
-						<Tag class="w-10 h-10 text-slate-200" />
-					</div>
-					<div class="space-y-1">
-						<p class="text-slate-400 font-bold text-lg">No products cataloged</p>
-						<p class="text-sm text-slate-300 font-medium">Start by adding your first product to the gallery</p>
-					</div>
+			<div class="col-span-full py-16 text-center">
+				<div class="flex flex-col items-center gap-2">
+					<Tag class="w-8 h-8 text-gray-300 mb-2" />
+					<p class="text-gray-900 font-medium text-sm">No products cataloged</p>
+					<p class="text-xs text-gray-500">Start by adding your first product to the gallery</p>
 				</div>
 			</div>
 		{/each}
@@ -143,15 +139,15 @@
 
 <!-- Add Product Modal -->
 {#if showAddModal}
-	<div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-		<div class="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden h-[90vh] flex flex-col">
-			<div class="p-8 border-b border-slate-50 flex items-center justify-between shrink-0">
-				<h2 class="text-xl font-extrabold text-slate-800">New Product Configuration</h2>
+	<div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+		<div class="bg-white w-full max-w-2xl rounded-xl shadow-xl border border-gray-200 overflow-hidden max-h-[90vh] flex flex-col">
+			<div class="px-6 py-5 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
+				<h2 class="text-lg font-semibold text-gray-900">New Product Configuration</h2>
 				<button 
 					onclick={() => showAddModal = false}
-					class="p-2 rounded-xl hover:bg-slate-50 text-slate-400 transition-colors"
+					class="p-2 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
 				>
-					<XCircle class="w-6 h-6" />
+					<XCircle class="w-5 h-5" />
 				</button>
 			</div>
 
@@ -159,29 +155,29 @@
 				method="POST" 
 				action="?/create" 
 				use:enhance 
-				class="flex-1 overflow-y-auto p-8 space-y-8"
+				class="flex-1 overflow-y-auto p-6 space-y-6"
 			>
 				{#if form?.error}
-					<div class="p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold border border-red-100 flex items-center gap-3">
-						<AlertCircle class="w-5 h-5" />
+					<div class="p-3 bg-red-50 text-red-700 rounded-lg text-sm font-medium border border-red-200 flex items-center gap-2">
+						<AlertCircle class="w-4 h-4 shrink-0" />
 						{form.error}
 					</div>
 				{/if}
 
 				<!-- Basic Info -->
-				<div class="space-y-6">
-					<div class="flex items-center gap-2 text-blue-600">
+				<div class="space-y-4">
+					<div class="flex items-center gap-2 text-gray-900 border-b border-gray-100 pb-2">
 						<Info class="w-4 h-4" />
-						<span class="text-xs font-black uppercase tracking-widest">Basic Information</span>
+						<span class="text-sm font-semibold">Basic Information</span>
 					</div>
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-						<div class="space-y-2">
-							<label for="name" class="text-xs font-black text-slate-500 uppercase tracking-tighter ml-1">Product Name</label>
-							<input type="text" name="name" id="name" required class="w-full px-5 py-4 bg-slate-50 rounded-2xl border border-transparent focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-slate-700 font-bold" />
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+						<div class="space-y-1.5">
+							<label for="name" class="text-sm font-medium text-gray-700">Product Name</label>
+							<input type="text" name="name" id="name" required class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm" />
 						</div>
-						<div class="space-y-2">
-							<label for="category" class="text-xs font-black text-slate-500 uppercase tracking-tighter ml-1">Category</label>
-							<select name="category" id="category" class="w-full px-5 py-4 bg-slate-50 rounded-2xl border border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all text-slate-700 font-bold appearance-none cursor-pointer">
+						<div class="space-y-1.5">
+							<label for="category" class="text-sm font-medium text-gray-700">Category</label>
+							<select name="category" id="category" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm appearance-none cursor-pointer">
 								<option value="Electronics">Electronics</option>
 								<option value="Furniture">Furniture</option>
 								<option value="Appliances">Appliances</option>
@@ -193,65 +189,63 @@
 				</div>
 
 				<!-- Pricing Section -->
-				<div class="space-y-6">
-					<div class="flex items-center gap-2 text-emerald-600">
+				<div class="space-y-4">
+					<div class="flex items-center gap-2 text-gray-900 border-b border-gray-100 pb-2">
 						<DollarSign class="w-4 h-4" />
-						<span class="text-xs font-black uppercase tracking-widest">Pricing & Calculations</span>
+						<span class="text-sm font-semibold">Pricing & Calculations</span>
 					</div>
-					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-						<div class="space-y-2">
-							<label for="purchasePrice" class="text-xs font-black text-slate-500 uppercase tracking-tighter ml-1">Purchase Price</label>
-							<input type="number" name="purchasePrice" id="purchasePrice" bind:value={purchasePrice} required class="w-full px-5 py-4 bg-slate-50 rounded-2xl border border-transparent focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all text-slate-700 font-bold" />
+					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+						<div class="space-y-1.5">
+							<label for="purchasePrice" class="text-sm font-medium text-gray-700">Purchase Price</label>
+							<input type="number" name="purchasePrice" id="purchasePrice" bind:value={purchasePrice} required class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm" />
 						</div>
-						<div class="space-y-2">
-							<label for="cashPrice" class="text-xs font-black text-slate-500 uppercase tracking-tighter ml-1">Cash Selling Price</label>
-							<input type="number" name="cashPrice" id="cashPrice" bind:value={cashPrice} required class="w-full px-5 py-4 bg-slate-50 rounded-2xl border border-transparent focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all text-slate-700 font-bold" />
+						<div class="space-y-1.5">
+							<label for="cashPrice" class="text-sm font-medium text-gray-700">Cash Selling Price</label>
+							<input type="number" name="cashPrice" id="cashPrice" bind:value={cashPrice} required class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm" />
 						</div>
-						<div class="space-y-2">
-							<label for="installmentPrice" class="text-xs font-black text-slate-500 uppercase tracking-tighter ml-1">Installment Price</label>
-							<input type="number" name="installmentPrice" id="installmentPrice" bind:value={installmentPrice} required class="w-full px-5 py-4 bg-slate-50 rounded-2xl border border-transparent focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-slate-700 font-bold" />
+						<div class="space-y-1.5">
+							<label for="installmentPrice" class="text-sm font-medium text-gray-700">Installment Price</label>
+							<input type="number" name="installmentPrice" id="installmentPrice" bind:value={installmentPrice} required class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm" />
 						</div>
 					</div>
 
-					<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-						<div class="space-y-2">
-							<label for="downPayment" class="text-xs font-black text-slate-500 uppercase tracking-tighter ml-1">Minimum Down Payment</label>
-							<input type="number" name="downPayment" id="downPayment" bind:value={downPayment} required class="w-full px-5 py-4 bg-slate-50 rounded-2xl border border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all text-slate-700 font-bold" />
+					<div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+						<div class="space-y-1.5">
+							<label for="downPayment" class="text-sm font-medium text-gray-700">Minimum Down Payment</label>
+							<input type="number" name="downPayment" id="downPayment" bind:value={downPayment} required class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm" />
 						</div>
-						<div class="space-y-2">
-							<label for="durationMonths" class="text-xs font-black text-slate-500 uppercase tracking-tighter ml-1">Standard Duration (Months)</label>
-							<input type="number" name="durationMonths" id="durationMonths" bind:value={durationMonths} required class="w-full px-5 py-4 bg-slate-50 rounded-2xl border border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all text-slate-700 font-bold" />
+						<div class="space-y-1.5">
+							<label for="durationMonths" class="text-sm font-medium text-gray-700">Standard Duration (Months)</label>
+							<input type="number" name="durationMonths" id="durationMonths" bind:value={durationMonths} required class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm" />
 						</div>
 					</div>
 				</div>
 
 				<!-- Live Preview Calculations -->
-				<div class="bg-blue-600 rounded-[2rem] p-8 text-white shadow-2xl shadow-blue-200">
-					<div class="grid grid-cols-2 gap-8">
+				<div class="bg-gray-900 rounded-xl p-6 text-white shadow-md">
+					<div class="grid grid-cols-2 gap-6">
 						<div>
-							<p class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-200">Projected Profit</p>
-							<p class="text-3xl font-black mt-2">{formatCurrency(profit)}</p>
-							<p class="text-[10px] font-bold text-blue-100 mt-1 italic">Based on installment price</p>
+							<p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Projected Profit</p>
+							<p class="text-2xl font-bold mt-1">{formatCurrency(profit)}</p>
 						</div>
 						<div class="text-right">
-							<p class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-200">Monthly Installment</p>
-							<p class="text-3xl font-black mt-2">{formatCurrency(monthlyAmount)}</p>
-							<p class="text-[10px] font-bold text-blue-100 mt-1 italic">Calculated automatically</p>
+							<p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Monthly Installment</p>
+							<p class="text-2xl font-bold mt-1">{formatCurrency(monthlyAmount)}</p>
 						</div>
 					</div>
 				</div>
 
-				<div class="flex items-center gap-4 py-4 shrink-0">
+				<div class="flex items-center gap-3 pt-4 border-t border-gray-100">
 					<button 
 						type="button"
 						onclick={() => showAddModal = false}
-						class="flex-1 px-8 py-5 rounded-3xl bg-slate-100 text-slate-500 font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-all"
+						class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors text-sm"
 					>
-						Discard
+						Cancel
 					</button>
 					<button 
 						type="submit"
-						class="flex-[2] px-8 py-5 rounded-3xl bg-blue-600 text-white font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all"
+						class="flex-[2] px-4 py-2 bg-gray-900 text-white font-medium rounded-lg shadow-sm hover:bg-gray-800 transition-colors text-sm"
 					>
 						Register Product
 					</button>
