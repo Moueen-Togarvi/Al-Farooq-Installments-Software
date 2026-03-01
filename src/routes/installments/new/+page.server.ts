@@ -1,5 +1,6 @@
 import { prisma } from '$lib/server/prisma';
 import { fail, redirect } from '@sveltejs/kit';
+import { serializeDecimals } from '$lib/utils';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
@@ -11,7 +12,10 @@ export const load: PageServerLoad = async () => {
         orderBy: { name: 'asc' }
     });
 
-    return { customers, products };
+    return {
+        customers: serializeDecimals(customers),
+        products: serializeDecimals(products)
+    };
 };
 
 export const actions: Actions = {
@@ -75,7 +79,10 @@ export const actions: Actions = {
                     data: installments
                 });
             });
-        } catch (err) {
+        } catch (err: any) {
+            // Re-throw SvelteKit redirects and failures
+            if (err.status && (err.location || err.data)) throw err;
+
             console.error(err);
             return fail(500, { error: 'Failed to create installment plan' });
         }

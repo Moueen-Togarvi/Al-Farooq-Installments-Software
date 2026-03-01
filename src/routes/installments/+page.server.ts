@@ -1,4 +1,5 @@
 import { prisma } from '$lib/server/prisma';
+import { serializeDecimals } from '$lib/utils';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
@@ -13,5 +14,5 @@ export const load: PageServerLoad = async () => {
         orderBy: { createdAt: 'desc' }
     });
 
-    return { plans };
+    return { plans: serializeDecimals(plans) };
 };

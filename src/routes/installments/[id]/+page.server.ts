@@ -1,5 +1,6 @@
 import { prisma } from '$lib/server/prisma';
 import { fail } from '@sveltejs/kit';
+import { serializeDecimals } from '$lib/utils';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -21,7 +22,7 @@ export const load: PageServerLoad = async ({ params }) => {
         throw fail(404, { error: 'Plan not found' });
     }
 
-    return { plan };
+    return { plan: serializeDecimals(plan) };
 };
 
 export const actions: Actions = {

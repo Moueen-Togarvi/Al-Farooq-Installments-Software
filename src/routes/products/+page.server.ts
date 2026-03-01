@@ -1,12 +1,13 @@
 import { prisma } from '$lib/server/prisma';
 import { fail } from '@sveltejs/kit';
+import { serializeDecimals } from '$lib/utils';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
     const products = await prisma.product.findMany({
         orderBy: { createdAt: 'desc' }
     });
-    return { products };
+    return { products: serializeDecimals(products) };
 };
 
 export const actions: Actions = {
@@ -20,8 +21,12 @@ export const actions: Actions = {
         const downPayment = parseFloat(data.get('downPayment') as string);
         const durationMonths = parseInt(data.get('durationMonths') as string);
 
-        if (!name || isNaN(purchasePrice) || isNaN(cashPrice) || isNaN(installmentPrice)) {
+        if (!name || isNaN(purchasePrice) || isNaN(cashPrice) || isNaN(installmentPrice) || isNaN(downPayment) || isNaN(durationMonths)) {
             return fail(400, { error: 'Missing or invalid fields' });
+        }
+
+        if (durationMonths <= 0) {
+            return fail(400, { error: 'Duration must be at least 1 month' });
         }
 
         const profit = installmentPrice - purchasePrice;

@@ -1,4 +1,5 @@
 import { prisma } from '$lib/server/prisma';
+import { serializeDecimals } from '$lib/utils';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url }: { url: URL }) => {
@@ -64,7 +65,7 @@ export const load: PageServerLoad = async ({ url }: { url: URL }) => {
     return {
         type,
         date,
-        reportData,
-        summary
+        reportData: serializeDecimals(reportData),
+        summary: serializeDecimals(summary)
     };
 };

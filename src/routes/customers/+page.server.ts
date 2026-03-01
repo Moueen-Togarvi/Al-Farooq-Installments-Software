@@ -1,12 +1,13 @@
 import { prisma } from '$lib/server/prisma';
 import { fail, redirect } from '@sveltejs/kit';
+import { serializeDecimals } from '$lib/utils';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
     const customers = await prisma.customer.findMany({
         orderBy: { createdAt: 'desc' }
     });
-    return { customers };
+    return { customers: serializeDecimals(customers) };
 };
 
 export const actions: Actions = {

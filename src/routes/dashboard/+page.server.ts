@@ -1,4 +1,5 @@
 import { prisma } from '$lib/server/prisma';
+import { serializeDecimals } from '$lib/utils';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
@@ -62,7 +63,7 @@ export const load: PageServerLoad = async () => {
         orderBy: { dueDate: 'asc' }
     });
 
-    return {
+    return serializeDecimals({
         stats: {
             totalCustomers,
             activePlans,
@@ -71,5 +72,5 @@ export const load: PageServerLoad = async () => {
         },
         todayDue,
         overdueInstallments
-    };
+    });
 };
