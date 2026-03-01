@@ -35,9 +35,9 @@
 		return new Date(date).getFullYear();
 	}
 	
-	const totalInstallmentSum = data.plan.installments.reduce((acc: number, cur: any) => acc + Number(cur.amount), 0);
-	const totalReceivedSum = data.plan.installments.reduce((acc: number, cur: any) => acc + Number(cur.receivedAmount), 0);
-	const totalPendingSum = data.plan.installments.reduce((acc: number, cur: any) => acc + Number(cur.pendingAmount), 0);
+	const totalInstallmentSum = $derived(data.plan.installments.reduce((acc: number, cur: any) => acc + Number(cur.amount), 0));
+	const totalReceivedSum = $derived(data.plan.installments.reduce((acc: number, cur: any) => acc + Number(cur.receivedAmount), 0));
+	const totalPendingSum = $derived(data.plan.installments.reduce((acc: number, cur: any) => acc + Number(cur.pendingAmount), 0));
 
 </script>
 
