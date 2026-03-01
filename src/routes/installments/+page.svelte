@@ -76,93 +76,89 @@
 		</button>
 	</div>
 
-	<!-- Plan Grid -->
-	<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-		{#each filteredPlans as plan}
-			<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group flex flex-col md:flex-row h-full">
-				<!-- Left Profile Section -->
-				<div class="p-6 md:w-56 bg-white border-b md:border-b-0 md:border-r border-gray-100 flex flex-col items-center text-center justify-center shrink-0">
-					<div class="w-16 h-16 rounded-full bg-gray-100 shadow-sm border border-gray-200 flex items-center justify-center font-bold text-xl text-gray-600 mb-3">
-						{plan.customer.name.substring(0, 2).toUpperCase()}
-					</div>
-					<h3 class="text-base font-bold text-gray-900 line-clamp-1 leading-tight">{plan.customer.name}</h3>
-					<p class="text-xs font-semibold text-gray-500 uppercase tracking-widest mt-1.5 px-2 py-0.5 bg-gray-50 rounded-md border border-gray-200">
-						{plan.product.category}
-					</p>
-				</div>
-
-				<!-- Content Section -->
-				<div class="p-6 flex-1 flex flex-col justify-between">
-					<div class="space-y-5">
-						<div class="flex items-start justify-between">
+	<!-- Plan Table -->
+	<div class="bg-white rounded-xl shadow-sm border-2 border-gray-200 overflow-x-auto">
+		<table class="w-full text-left border-collapse min-w-[1000px]">
+			<thead>
+				<tr class="bg-gray-50 border-b-2 border-gray-200">
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Plan Details</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Customer</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Product Info</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Financials</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Progress</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Actions</th>
+				</tr>
+			</thead>
+			<tbody class="divide-y-2 divide-gray-100">
+				{#each filteredPlans as plan}
+					<tr class="hover:bg-gray-50 transition-colors group">
+						<td class="px-6 py-4">
 							<div class="space-y-1">
-								<h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider leading-none">Purchased Product</h4>
-								<p class="text-base font-bold text-gray-900 leading-tight pt-1">{plan.product.name}</p>
+								<p class="text-xs font-black text-black">#{plan.id.substring(0, 8).toUpperCase()}</p>
+								<span class="inline-block px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider border {getPlanStatusColor(plan.status)}">
+									{plan.status}
+								</span>
 							</div>
-							<span class="px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wider border {getPlanStatusColor(plan.status)} shrink-0">
-								{plan.status}
-							</span>
-						</div>
-
-						<div class="grid grid-cols-2 gap-6">
-							<div class="space-y-1">
-								<p class="text-xs font-semibold text-gray-500 uppercase tracking-wider leading-none">Total Amount</p>
-								<p class="text-sm font-bold text-gray-900 pt-1">{formatCurrency(plan.totalAmount)}</p>
-							</div>
-							<div class="space-y-1">
-								<p class="text-xs font-semibold text-gray-500 uppercase tracking-wider leading-none">Remaining</p>
-								<p class="text-sm font-bold text-red-600 pt-1">{formatCurrency(plan.remainingBalance)}</p>
-							</div>
-						</div>
-
-						<div class="space-y-2 pt-2">
-							<div class="flex items-center justify-between text-xs font-semibold uppercase tracking-wider">
-								<span class="text-gray-500">Payment Progress</span>
-								<span class="text-gray-900">{calculateProgress(plan)}%</span>
-							</div>
-							<div class="h-2 w-full bg-gray-100 rounded-full overflow-hidden flex">
-								<div 
-									class="h-full bg-gray-900 rounded-full transition-all duration-1000" 
-									style="width: {calculateProgress(plan)}%"
-								></div>
-							</div>
-						</div>
-					</div>
-
-					<div class="pt-6 flex items-center justify-between">
-						<div class="flex -space-x-2 overflow-hidden py-1">
-							{#each plan.installments.slice(0, 5) as inst}
-								<div 
-									class="inline-block h-8 w-8 rounded-full ring-2 ring-white shadow-sm border border-gray-200 flex items-center justify-center text-[10px] font-bold {inst.status === 'PAID' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-400'}"
-									title="Month {inst.month}"
-								>
-									M{inst.serialNumber}
+						</td>
+						<td class="px-6 py-4">
+							<div class="flex items-center gap-3">
+								<div class="w-8 h-8 rounded-full bg-black flex items-center justify-center font-black text-white text-xs shrink-0 shadow-sm">
+									{plan.customer.name.substring(0, 2).toUpperCase()}
 								</div>
-							{/each}
-							{#if plan.installments.length > 5}
-								<div class="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 border border-gray-200">
-									+{plan.installments.length - 5}
+								<p class="text-sm font-black text-black tracking-wide">{plan.customer.name}</p>
+							</div>
+						</td>
+						<td class="px-6 py-4">
+							<div class="space-y-0.5">
+								<p class="text-sm font-black text-gray-900">{plan.product.name}</p>
+								<p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{plan.product.category}</p>
+							</div>
+						</td>
+						<td class="px-6 py-4">
+							<div class="space-y-0.5">
+								<p class="text-xs font-bold text-gray-600">Total: <span class="font-black text-black">{formatCurrency(plan.totalAmount)}</span></p>
+								<p class="text-[10px] font-bold text-red-600 uppercase tracking-wider">Remaining: <span class="font-black text-red-600">{formatCurrency(plan.remainingBalance)}</span></p>
+							</div>
+						</td>
+						<td class="px-6 py-4 w-48">
+							<div class="space-y-1.5 w-full">
+								<div class="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+									<span class="text-gray-500">Recovery</span>
+									<span class="text-black">{calculateProgress(plan)}%</span>
 								</div>
-							{/if}
-						</div>
-						<a 
-							href="/installments/{plan.id}"
-							class="flex items-center gap-1.5 text-xs font-semibold text-gray-900 hover:text-gray-700 transition-colors uppercase tracking-wider group"
-						>
-							View Ledger
-							<ArrowRight class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-						</a>
-					</div>
-				</div>
-			</div>
-		{:else}
-			<div class="col-span-full py-16 text-center">
-				<div class="flex flex-col items-center gap-2">
-					<TrendingUp class="w-8 h-8 text-gray-300 mb-2" />
-					<p class="text-gray-900 font-medium text-sm">No active installment plans</p>
-					<p class="text-xs text-gray-500">Create your first sale to start tracking installments</p>
-				</div>
-			</div>
-		{/each}
+								<div class="h-2 w-full bg-gray-200 rounded-full overflow-hidden flex">
+									<div 
+										class="h-full bg-black rounded-full transition-all duration-1000" 
+										style="width: {calculateProgress(plan)}%"
+									></div>
+								</div>
+							</div>
+						</td>
+						<td class="px-6 py-4">
+							<div class="flex items-center justify-center">
+								<div class="flex items-center gap-1 bg-gray-100 p-1.5 rounded-lg border border-gray-200">
+									<a 
+										href="/installments/{plan.id}"
+										class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white text-[10px] font-black uppercase tracking-wider text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-colors shadow-sm"
+									>
+										View Ledger <ArrowRight class="w-3.5 h-3.5" />
+									</a>
+								</div>
+							</div>
+						</td>
+					</tr>
+				{:else}
+					<tr>
+						<td colspan="6" class="px-6 py-16 text-center">
+							<div class="flex flex-col items-center gap-2">
+								<TrendingUp class="w-10 h-10 text-gray-300 mb-2" />
+								<p class="text-black font-black uppercase tracking-widest text-sm">No active installment plans</p>
+								<p class="text-xs font-bold text-gray-500">Create your first sale to start tracking installments</p>
+							</div>
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
 	</div>
 </div>

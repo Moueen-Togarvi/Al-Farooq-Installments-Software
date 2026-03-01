@@ -70,49 +70,49 @@
 	</div>
 
 	<!-- Product Table -->
-	<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-		<div class="overflow-x-auto">
-			<table class="w-full text-left border-collapse min-w-[1000px]">
-				<thead>
-					<tr class="bg-gray-50 border-b border-gray-200">
-						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Info</th>
-						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pricing Engine</th>
-						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Plan Terms</th>
-						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Calculated Profit</th>
-						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
-					</tr>
-				</thead>
-				<tbody class="divide-y divide-gray-100">
-					{#each filteredProducts as product}
-						<tr class="hover:bg-gray-50/50 transition-colors group">
-							<td class="px-6 py-4">
-								<div class="space-y-1">
-									<h3 class="text-sm font-bold text-gray-900">{product.name}</h3>
-									<span class="inline-block px-2.5 py-1 rounded-md bg-gray-100 text-gray-600 text-xs font-semibold border border-gray-200">
-										{product.category}
-									</span>
-								</div>
-							</td>
-							<td class="px-6 py-4">
-								<div class="space-y-0.5">
-									<p class="text-xs font-medium text-gray-500">Cash: <span class="font-bold text-gray-900">{formatCurrency(product.cashPrice)}</span></p>
-									<p class="text-xs font-medium text-gray-500">Plan: <span class="font-bold text-gray-900">{formatCurrency(product.installmentPrice)}</span></p>
-								</div>
-							</td>
-							<td class="px-6 py-4">
-								<div class="space-y-0.5">
-									<p class="text-xs font-medium text-gray-500">Advance: <span class="font-bold text-gray-900">{formatCurrency(product.downPayment)}</span></p>
-									<p class="text-xs font-medium text-gray-500">{product.durationMonths}mo &times; <span class="font-bold text-gray-900">{formatCurrency(product.monthlyAmount)}</span></p>
-								</div>
-							</td>
-							<td class="px-6 py-4">
-								<div class="flex items-center gap-2">
-									<TrendingUp class="w-4 h-4 text-gray-500" />
-									<span class="text-sm font-bold text-gray-900">{formatCurrency(product.profit)}</span>
-								</div>
-							</td>
-							<td class="px-6 py-4 text-right">
-								<div class="flex items-center justify-end gap-2">
+	<div class="bg-white rounded-xl shadow-sm border-2 border-gray-200 overflow-x-auto">
+		<table class="w-full text-left border-collapse min-w-[1000px]">
+			<thead>
+				<tr class="bg-gray-50 border-b-2 border-gray-200">
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Product Info</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Pricing Engine</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Plan Terms</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Calculated Profit</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Actions</th>
+				</tr>
+			</thead>
+			<tbody class="divide-y-2 divide-gray-100">
+				{#each filteredProducts as product}
+					<tr class="hover:bg-gray-50 transition-colors group">
+						<td class="px-6 py-4">
+							<div class="space-y-1">
+								<h3 class="text-sm font-black text-black">{product.name}</h3>
+								<span class="inline-block px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-600 border border-gray-200">
+									{product.category}
+								</span>
+							</div>
+						</td>
+						<td class="px-6 py-4">
+							<div class="space-y-0.5">
+								<p class="text-xs font-bold text-gray-600">Cash: <span class="font-black text-gray-900">{formatCurrency(product.cashPrice)}</span></p>
+								<p class="text-xs font-bold text-gray-600">Plan: <span class="font-black text-gray-900">{formatCurrency(product.installmentPrice)}</span></p>
+							</div>
+						</td>
+						<td class="px-6 py-4">
+							<div class="space-y-0.5">
+								<p class="text-xs font-bold text-gray-600">Advance: <span class="font-black text-gray-900">{formatCurrency(product.downPayment)}</span></p>
+								<p class="text-xs font-bold text-gray-600">{product.durationMonths}mo &times; <span class="font-black text-gray-900">{formatCurrency(product.monthlyAmount)}</span></p>
+							</div>
+						</td>
+						<td class="px-6 py-4">
+							<div class="flex items-center gap-2 bg-emerald-50 w-fit px-3 py-1.5 rounded-lg border border-emerald-100">
+								<TrendingUp class="w-4 h-4 text-emerald-600" />
+								<span class="text-sm font-black text-emerald-700">{formatCurrency(product.profit)}</span>
+							</div>
+						</td>
+						<td class="px-6 py-4">
+							<div class="flex items-center justify-center">
+								<div class="flex items-center gap-1 bg-gray-100 p-1.5 rounded-lg border border-gray-200">
 									<button 
 										onclick={() => {
 											editingProduct = { ...product };
@@ -122,9 +122,9 @@
 											downPayment = product.downPayment;
 											durationMonths = product.durationMonths;
 										}}
-										class="p-2 rounded-md hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 text-gray-400 hover:text-gray-900 transition-colors"
+										class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white text-[10px] font-black uppercase tracking-wider text-blue-600 border border-blue-100 hover:bg-blue-600 hover:text-white transition-colors shadow-sm"
 									>
-										<Edit2 class="w-4 h-4" />
+										<Edit2 class="w-3.5 h-3.5" /> Edit
 									</button>
 									<form 
 										method="POST" 
@@ -138,27 +138,27 @@
 											};
 										}}
 									>
-										<button class="p-2 rounded-md hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 text-gray-400 hover:text-red-600 transition-colors">
-											<Trash2 class="w-4 h-4" />
+										<button class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white text-[10px] font-black uppercase tracking-wider text-red-600 border border-red-100 hover:bg-red-600 hover:text-white transition-colors shadow-sm">
+											<Trash2 class="w-3.5 h-3.5" /> Delete
 										</button>
 									</form>
 								</div>
-							</td>
-						</tr>
-					{:else}
-						<tr>
-							<td colspan="5" class="px-6 py-16 text-center">
-								<div class="flex flex-col items-center gap-2">
-									<Tag class="w-8 h-8 text-gray-300 mb-2" />
-									<p class="text-gray-900 font-medium text-sm">No products cataloged</p>
-									<p class="text-xs text-gray-500">Start by adding your first product to the gallery</p>
-								</div>
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
+							</div>
+						</td>
+					</tr>
+				{:else}
+					<tr>
+						<td colspan="5" class="px-6 py-16 text-center">
+							<div class="flex flex-col items-center gap-2">
+								<Tag class="w-10 h-10 text-gray-300 mb-2" />
+								<p class="text-black font-black uppercase tracking-widest text-sm">No products cataloged</p>
+								<p class="text-xs font-bold text-gray-500">Start by adding your first product to the gallery</p>
+							</div>
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
 	</div>
 </div>
 

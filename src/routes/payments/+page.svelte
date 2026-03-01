@@ -58,78 +58,77 @@
 	</div>
 
 	<!-- Payments Table -->
-	<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-		<div class="overflow-x-auto">
-			<table class="w-full text-left border-collapse min-w-[800px]">
-				<thead>
-					<tr class="bg-gray-50 border-b border-gray-200">
-						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Transaction / Date</th>
-						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
-						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
-						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Method</th>
-						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Amount</th>
-						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+	<div class="bg-white rounded-xl shadow-sm border-2 border-gray-200 overflow-x-auto">
+		<table class="w-full text-left border-collapse min-w-[1000px]">
+			<thead>
+				<tr class="bg-gray-50 border-b-2 border-gray-200">
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Receipt ID / Date</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Customer</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Product Info</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Method</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Amount</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Actions</th>
+				</tr>
+			</thead>
+			<tbody class="divide-y-2 divide-gray-100">
+				{#each filteredPayments as payment}
+					<tr class="hover:bg-gray-50 transition-colors group">
+						<td class="px-6 py-4">
+							<div class="flex flex-col items-center justify-center text-center">
+								<p class="text-xs font-black text-black tracking-wide bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+									#{payment.id.slice(-8).toUpperCase()}
+								</p>
+								<p class="text-[10px] font-bold text-gray-500 mt-1 uppercase tracking-widest">{formatDate(payment.paymentDate)}</p>
+							</div>
+						</td>
+						<td class="px-6 py-4">
+							<div class="flex items-center gap-3">
+								<div class="w-8 h-8 rounded-full bg-black flex items-center justify-center font-black text-white text-xs shrink-0 shadow-sm">
+									{payment.installment.plan.customer.name.substring(0, 2).toUpperCase()}
+								</div>
+								<p class="text-sm font-black text-black tracking-wide">{payment.installment.plan.customer.name}</p>
+							</div>
+						</td>
+						<td class="px-6 py-4">
+							<div class="space-y-0.5">
+								<p class="text-sm font-black text-gray-900">{payment.installment.plan.product.name}</p>
+							</div>
+						</td>
+						<td class="px-6 py-4 text-center">
+							<span class="px-2.5 py-1 rounded text-[10px] font-black tracking-widest uppercase bg-gray-100 text-gray-600 border border-gray-200">
+								{payment.method}
+							</span>
+						</td>
+						<td class="px-6 py-4 text-right">
+							<p class="text-sm font-black text-black">{formatCurrency(payment.amount)}</p>
+						</td>
+						<td class="px-6 py-4">
+							<div class="flex items-center justify-center">
+								<div class="flex items-center gap-1 bg-gray-100 p-1.5 rounded-lg border border-gray-200">
+									<a 
+										href="/installments/{payment.installment.planId}" 
+										class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white text-[10px] font-black uppercase tracking-wider text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-colors shadow-sm"
+									>
+										View Ledger <ArrowRight class="w-3.5 h-3.5" />
+									</a>
+								</div>
+							</div>
+						</td>
 					</tr>
-				</thead>
-				<tbody class="divide-y divide-gray-100">
-					{#each filteredPayments as payment}
-						<tr class="hover:bg-gray-50/50 transition-colors group">
-							<td class="px-6 py-4">
-								<div class="flex items-center gap-3">
-									<div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 shrink-0 border border-gray-200">
-										<Receipt class="w-5 h-5" />
-									</div>
-									<div>
-										<p class="text-xs font-bold text-gray-900 uppercase tracking-wider line-clamp-1">{payment.id.slice(-8)}</p>
-										<p class="text-xs font-medium text-gray-500 mt-0.5">{formatDate(payment.paymentDate)}</p>
-									</div>
+				{:else}
+					<tr>
+						<td colspan="6" class="px-6 py-16 text-center">
+							<div class="flex flex-col items-center gap-3">
+								<WalletCards class="w-10 h-10 text-gray-300" />
+								<div class="space-y-1">
+									<p class="text-black font-black uppercase tracking-widest text-sm">No payments found</p>
+									<p class="text-xs font-bold text-gray-500">When customers pay, their records will appear here</p>
 								</div>
-							</td>
-							<td class="px-6 py-4">
-								<div class="flex items-center gap-2">
-									<User class="w-4 h-4 text-gray-400" />
-									<p class="text-sm font-semibold text-gray-900">{payment.installment.plan.customer.name}</p>
-								</div>
-							</td>
-							<td class="px-6 py-4">
-								<div class="flex items-center gap-2">
-									<Package class="w-4 h-4 text-gray-400" />
-									<p class="text-sm font-semibold text-gray-700">{payment.installment.plan.product.name}</p>
-								</div>
-							</td>
-							<td class="px-6 py-4 text-center">
-								<span class="px-2.5 py-1 rounded-md bg-gray-100 text-gray-600 text-xs font-semibold uppercase tracking-wider border border-gray-200">
-									{payment.method}
-								</span>
-							</td>
-							<td class="px-6 py-4 text-right">
-								<p class="text-sm font-bold text-gray-900">{formatCurrency(payment.amount)}</p>
-							</td>
-							<td class="px-6 py-4 text-right">
-								<a 
-									href="/installments/{payment.installment.planId}" 
-									class="inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm"
-								>
-									View Ledger
-									<ArrowRight class="w-3.5 h-3.5" />
-								</a>
-							</td>
-						</tr>
-					{:else}
-						<tr>
-							<td colspan="6" class="px-6 py-16 text-center">
-								<div class="flex flex-col items-center gap-3">
-									<WalletCards class="w-8 h-8 text-gray-300" />
-									<div class="space-y-1">
-										<p class="text-gray-900 font-medium text-sm">No payments found</p>
-										<p class="text-xs text-gray-500">When customers pay, their records will appear here</p>
-									</div>
-								</div>
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
+							</div>
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
 	</div>
 </div>

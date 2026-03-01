@@ -65,49 +65,54 @@
 	</div>
 
 	<!-- Customer Grid/Table -->
-	<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-		<div class="overflow-x-auto">
-			<table class="w-full text-left border-collapse min-w-[800px]">
-				<thead>
-					<tr class="bg-white border-b border-gray-200">
-						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer Info</th>
-						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">CNIC & Mobile</th>
-						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-						<th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-					</tr>
-				</thead>
-				<tbody class="divide-y divide-gray-100">
-					{#each filteredCustomers as customer}
-						<tr class="hover:bg-gray-50/50 transition-colors group">
-							<td class="px-6 py-4">
-								<div class="flex items-center gap-4">
-									<div class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-gray-600 shrink-0">
-										{customer.name.substring(0, 2).toUpperCase()}
-									</div>
-									<div>
-										<p class="font-semibold text-gray-900">{customer.name}</p>
-										<p class="text-xs text-gray-500 mt-0.5">{customer.address}</p>
-									</div>
+	<div class="bg-white rounded-xl shadow-sm border-2 border-gray-200 overflow-x-auto">
+		<table class="w-full text-left border-collapse min-w-[1000px]">
+			<thead>
+				<tr class="bg-gray-50 border-b-2 border-gray-200">
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Customer Profile</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">CNIC #</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Mobile/Ref</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Full Address</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Status</th>
+					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Actions</th>
+				</tr>
+			</thead>
+			<tbody class="divide-y-2 divide-gray-100">
+				{#each filteredCustomers as customer}
+					<tr class="hover:bg-gray-50 transition-colors group">
+						<td class="px-6 py-4">
+							<div class="flex items-center gap-4">
+								<div class="w-10 h-10 rounded-full bg-black flex items-center justify-center font-black text-white shrink-0 shadow-sm">
+									{customer.name.substring(0, 2).toUpperCase()}
 								</div>
-							</td>
-							<td class="px-6 py-4">
-								<div class="space-y-0.5">
-									<p class="text-sm font-semibold text-gray-900">{customer.cnic}</p>
-									<p class="text-xs text-gray-500">{customer.mobile}</p>
-								</div>
-							</td>
-							<td class="px-6 py-4">
-								<span class="px-2.5 py-1 rounded-md text-xs font-semibold border {getStatusColor(customer.status)}">
-									{customer.status}
-								</span>
-							</td>
-							<td class="px-6 py-4">
-								<div class="flex items-center gap-2">
+								<p class="text-sm font-black text-black">{customer.name}</p>
+							</div>
+						</td>
+						<td class="px-6 py-4">
+							<p class="text-sm font-black text-gray-700 tracking-wide">{customer.cnic}</p>
+						</td>
+						<td class="px-6 py-4">
+							<p class="text-sm font-black text-gray-700">{customer.mobile}</p>
+							{#if customer.referenceName}
+								<p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mt-0.5">Ref: {customer.referenceName}</p>
+							{/if}
+						</td>
+						<td class="px-6 py-4">
+							<p class="text-xs font-bold text-gray-600 max-w-[200px] leading-tight">{customer.address}</p>
+						</td>
+						<td class="px-6 py-4">
+							<span class="px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider border {getStatusColor(customer.status)}">
+								{customer.status}
+							</span>
+						</td>
+						<td class="px-6 py-4">
+							<div class="flex items-center justify-center">
+								<div class="flex items-center gap-1 bg-gray-100 p-1.5 rounded-lg border border-gray-200">
 									<button 
 										onclick={() => editingCustomer = customer}
-										class="p-2 rounded-md hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 text-gray-400 hover:text-gray-900 transition-colors"
+										class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white text-[10px] font-black uppercase tracking-wider text-blue-600 border border-blue-100 hover:bg-blue-600 hover:text-white transition-colors shadow-sm"
 									>
-										<Edit2 class="w-4 h-4" />
+										<Edit2 class="w-3.5 h-3.5" /> Edit
 									</button>
 									<form 
 										method="POST" 
@@ -121,27 +126,27 @@
 											};
 										}}
 									>
-										<button class="p-2 rounded-md hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 text-gray-400 hover:text-red-600 transition-colors">
-											<Trash2 class="w-4 h-4" />
+										<button class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white text-[10px] font-black uppercase tracking-wider text-red-600 border border-red-100 hover:bg-red-600 hover:text-white transition-colors shadow-sm">
+											<Trash2 class="w-3.5 h-3.5" /> Delete
 										</button>
 									</form>
 								</div>
-							</td>
-						</tr>
-					{:else}
-						<tr>
-							<td colspan="4" class="px-6 py-16 text-center">
-								<div class="flex flex-col items-center gap-2">
-									<Users class="w-8 h-8 text-gray-300 mb-2" />
-									<p class="text-gray-900 font-medium text-sm">No customers found</p>
-									<p class="text-xs text-gray-500">Try adding a new customer or adjusting your search</p>
-								</div>
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
+							</div>
+						</td>
+					</tr>
+				{:else}
+					<tr>
+						<td colspan="6" class="px-6 py-16 text-center">
+							<div class="flex flex-col items-center gap-2">
+								<Users class="w-10 h-10 text-gray-300 mb-2" />
+								<p class="text-black font-black uppercase tracking-widest text-sm">No customers found</p>
+								<p class="text-xs font-bold text-gray-500">Try adding a new customer or adjusting your search</p>
+							</div>
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
 	</div>
 </div>
 
