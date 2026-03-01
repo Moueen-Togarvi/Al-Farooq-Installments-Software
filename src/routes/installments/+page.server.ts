@@ -1,0 +1,17 @@
+import { prisma } from '$lib/server/prisma';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async () => {
+    const plans = await prisma.installmentPlan.findMany({
+        include: {
+            customer: true,
+            product: true,
+            installments: {
+                orderBy: { serialNumber: 'asc' }
+            }
+        },
+        orderBy: { createdAt: 'desc' }
+    });
+
+    return { plans };
+};

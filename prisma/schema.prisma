@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
+enum CustomerStatus {
+  ACTIVE
+  CLOSED
+  DEFAULTER
+}
+
+enum PlanStatus {
+  ACTIVE
+  CLOSED
+  DEFAULTED
+}
+
+enum InstallmentStatus {
+  PAID
+  UNPAID
+  PARTIAL
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(STAFF)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Customer {
+  id            String         @id @default(cuid())
+  name          String
+  referenceName String?
+  cnic          String         @unique
+  mobile        String
+  address       String
+  photoUrl      String?
+  cnicImageUrl  String?
+  status        CustomerStatus @default(ACTIVE)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  plans         InstallmentPlan[]
+}
+
+model Product {
+  id               String   @id @default(cuid())
+  name             String
+  category         String
+  purchasePrice    Decimal  @db.Decimal(12, 2)
+  cashPrice        Decimal  @db.Decimal(12, 2)
+  installmentPrice Decimal  @db.Decimal(12, 2)
+  downPayment      Decimal  @db.Decimal(12, 2)
+  profit           Decimal  @db.Decimal(12, 2)
+  durationMonths   Int
+  monthlyAmount    Decimal  @db.Decimal(12, 2)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  plans            InstallmentPlan[]
+}
+
+model InstallmentPlan {
+  id               String       @id @default(cuid())
+  customerId       String
+  customer         Customer     @relation(fields: [customerId], references: [id])
+  productId        String
+  product          Product      @relation(fields: [productId], references: [id])
+  totalAmount      Decimal      @db.Decimal(12, 2)
+  remainingBalance Decimal      @db.Decimal(12, 2)
+  startDate        DateTime     @default(now())
+  status           PlanStatus   @default(ACTIVE)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  installments     Installment[]
+}
+
+model Installment {
+  id             String            @id @default(cuid())
+  planId         String
+  plan           InstallmentPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  serialNumber   Int
+  month          Int
+  year           Int
+  amount         Decimal           @db.Decimal(12, 2)
+  receivedAmount Decimal           @db.Decimal(12, 2) @default(0)
+  pendingAmount  Decimal           @db.Decimal(12, 2)
+  dueDate        DateTime
+  paymentDate    DateTime?
+  status         InstallmentStatus @default(UNPAID)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  payments       Payment[]
+}
+
+model Payment {
+  id            String      @id @default(cuid())
+  installmentId String
+  installment   Installment @relation(fields: [installmentId], references: [id], onDelete: Cascade)
+  amount        Decimal     @db.Decimal(12, 2)
+  paymentDate   DateTime    @default(now())
+  method        String      @default("CASH")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}

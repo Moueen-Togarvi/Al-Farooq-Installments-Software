@@ -1,68 +1,42 @@
-# Al Farooq Installments Software
+# sv
 
-A **minimal, readable, and light-mode only** installment management starter built with:
+Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
 
-- SvelteKit
-- Tailwind CSS
-- PostgreSQL (Neon-ready)
+## Creating a project
 
-## Features included (UI + structure)
+If you're seeing this, you've probably already done this step. Congrats!
 
-- Dashboard KPIs
-- Customer management form
-- Product management form
-- Installment plan creation form
-- Installment tracking table + payment area
-- Reports cards + export actions
-- Settings page for optional integrations
-- Mobile responsive navigation and layout
-- Accessible semantic HTML and focus states
+```sh
+# create a new project
+npx sv create my-app
+```
 
-## Setup
+To recreate this project with the same configuration:
 
-> Note: if your environment blocks npm registry access, install dependencies in a network-enabled environment.
+```sh
+# recreate this project
+npx sv@0.12.4 create --template minimal --types ts --no-install .
+```
 
-```bash
-npm install
+## Developing
+
+Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+
+```sh
 npm run dev
+
+# or start the server and open the app in a new browser tab
+npm run dev -- --open
 ```
 
-## Neon / PostgreSQL
+## Building
 
-1. Copy environment file:
+To create a production version of your app:
 
-```bash
-cp .env.example .env
+```sh
+npm run build
 ```
 
-2. Set your Neon connection string in `.env`.
-3. Run SQL schema at `database/schema.sql`.
+You can preview the production build with `npm run preview`.
 
-## Data model
-
-Core tables:
-
-- users
-- customers
-- products
-- installment_plans
-- installments
-- payments
-- fines
-- expenses
-- branches
-
-## Core calculations to implement in server actions/APIs
-
-- `profit = installment_price - purchase_price`
-- `remaining_balance = total_amount - sum(payments)`
-- `days_late = current_date - due_date`
-- `fine = days_late * fine_rate`
-
-## Suggested next steps
-
-- Add server actions for CRUD operations
-- Add authentication and role-based permissions
-- Add PDF receipt generation
-- Add SMS/WhatsApp reminders
-- Add audit logs and backup tools
+> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
