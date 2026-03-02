@@ -5,6 +5,11 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
     const customers = await prisma.customer.findMany({
+        include: {
+            _count: {
+                select: { plans: { where: { status: 'ACTIVE' } } }
+            }
+        },
         orderBy: { createdAt: 'desc' }
     });
     return { customers: serializeDecimals(customers) };

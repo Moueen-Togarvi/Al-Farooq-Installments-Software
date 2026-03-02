@@ -30,9 +30,11 @@ export const actions: Actions = {
                 return fail(400, { error: 'Invalid email or password' });
             }
 
-            // In a real app, use bcrypt.compare here
-            // For now, doing a simple check (we should hash passwords!)
-            if (user.password !== password) {
+            // Verify password using bcrypt
+            const { compare } = await import('bcryptjs');
+            const isValid = await compare(password, user.password);
+
+            if (!isValid) {
                 return fail(400, { error: 'Invalid email or password' });
             }
 

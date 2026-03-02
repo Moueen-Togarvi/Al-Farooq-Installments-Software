@@ -17,23 +17,10 @@ export const actions: Actions = {
         const category = data.get('category') as string;
         const purchasePrice = parseFloat(data.get('purchasePrice') as string);
         const cashPrice = parseFloat(data.get('cashPrice') as string);
-        const installmentPrice = parseFloat(data.get('installmentPrice') as string);
-        const downPayment = parseFloat(data.get('downPayment') as string);
-        const durationMonths = parseInt(data.get('durationMonths') as string);
 
-        if (!name || isNaN(purchasePrice) || isNaN(cashPrice) || isNaN(installmentPrice) || isNaN(downPayment) || isNaN(durationMonths)) {
+        if (!name || isNaN(purchasePrice) || isNaN(cashPrice)) {
             return fail(400, { error: 'Missing or invalid fields' });
         }
-
-        if (durationMonths <= 0) {
-            return fail(400, { error: 'Duration must be at least 1 month' });
-        }
-
-        const rawProfit = parseFloat(data.get('profit') as string);
-        const profit = !isNaN(rawProfit) ? rawProfit : (installmentPrice - purchasePrice);
-
-        const rawMonthly = parseFloat(data.get('monthlyAmount') as string);
-        const monthlyAmount = !isNaN(rawMonthly) ? rawMonthly : ((installmentPrice - downPayment) / durationMonths);
 
         try {
             await prisma.product.create({
@@ -42,11 +29,11 @@ export const actions: Actions = {
                     category,
                     purchasePrice,
                     cashPrice,
-                    installmentPrice,
-                    downPayment,
-                    profit,
-                    durationMonths,
-                    monthlyAmount
+                    installmentPrice: 0,
+                    downPayment: 0,
+                    profit: 0,
+                    durationMonths: 1,
+                    monthlyAmount: 0
                 }
             });
         } catch (err: any) {
@@ -70,23 +57,10 @@ export const actions: Actions = {
         const category = data.get('category') as string;
         const purchasePrice = parseFloat(data.get('purchasePrice') as string);
         const cashPrice = parseFloat(data.get('cashPrice') as string);
-        const installmentPrice = parseFloat(data.get('installmentPrice') as string);
-        const downPayment = parseFloat(data.get('downPayment') as string);
-        const durationMonths = parseInt(data.get('durationMonths') as string);
 
-        if (!name || isNaN(purchasePrice) || isNaN(cashPrice) || isNaN(installmentPrice) || isNaN(downPayment) || isNaN(durationMonths)) {
+        if (!name || isNaN(purchasePrice) || isNaN(cashPrice)) {
             return fail(400, { error: 'Missing or invalid fields' });
         }
-
-        if (durationMonths <= 0) {
-            return fail(400, { error: 'Duration must be at least 1 month' });
-        }
-
-        const rawProfit = parseFloat(data.get('profit') as string);
-        const profit = !isNaN(rawProfit) ? rawProfit : (installmentPrice - purchasePrice);
-
-        const rawMonthly = parseFloat(data.get('monthlyAmount') as string);
-        const monthlyAmount = !isNaN(rawMonthly) ? rawMonthly : ((installmentPrice - downPayment) / durationMonths);
 
         try {
             await prisma.product.update({
@@ -95,12 +69,7 @@ export const actions: Actions = {
                     name,
                     category,
                     purchasePrice,
-                    cashPrice,
-                    installmentPrice,
-                    downPayment,
-                    profit,
-                    durationMonths,
-                    monthlyAmount
+                    cashPrice
                 }
             });
         } catch (err: any) {

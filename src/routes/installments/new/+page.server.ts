@@ -82,17 +82,25 @@ export const actions: Actions = {
                         });
                     }
                 } else {
+                    const baseMonthlyAmount = Math.floor(remainingBalance / durationMonths);
+                    const remainder = remainingBalance - (baseMonthlyAmount * durationMonths);
+
                     for (let i = 1; i <= durationMonths; i++) {
                         const dueDate = new Date(startDate);
                         dueDate.setMonth(dueDate.getMonth() + i);
+
+                        // Add remainder to the last installment
+                        const amount = i === durationMonths
+                            ? baseMonthlyAmount + remainder
+                            : baseMonthlyAmount;
 
                         installments.push({
                             planId: plan.id,
                             serialNumber: i,
                             month: dueDate.getMonth() + 1,
                             year: dueDate.getFullYear(),
-                            amount: monthlyAmount,
-                            pendingAmount: monthlyAmount,
+                            amount: amount,
+                            pendingAmount: amount,
                             status: 'UNPAID',
                             dueDate
                         });

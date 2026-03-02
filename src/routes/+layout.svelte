@@ -10,7 +10,8 @@
 		BarChart3, 
 		LogOut,
 		Menu,
-		X
+		X,
+		Info
 	} from 'lucide-svelte';
 
 	let { children } = $props();
@@ -79,7 +80,7 @@
 					{/each}
 				</nav>
 
-				<div class="p-4 border-t border-gray-100 mt-auto">
+				<div class="p-4 border-t border-gray-100 mt-auto space-y-2">
 					<form method="POST" action="/logout">
 						<button
 							class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors group"
@@ -113,6 +114,15 @@
 				</div>
 
 				<div class="flex items-center gap-4">
+					<!-- Support Helpline Badge in Header -->
+					<div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100">
+						<Info class="w-3.5 h-3.5 text-blue-500" />
+						<div class="flex flex-col">
+							<span class="text-[8px] font-black uppercase tracking-widest text-blue-500 leading-none">Support</span>
+							<span class="text-[10px] font-bold text-blue-700 leading-none">0305-9743641</span>
+						</div>
+					</div>
+
 					<div class="hidden sm:flex flex-col items-end">
 						<span class="text-sm font-medium text-gray-900 leading-none">{page.data.user?.name || 'Admin'}</span>
 						<span class="text-[11px] font-medium text-gray-500 mt-1 uppercase tracking-wide">{page.data.user?.role || 'Staff'}</span>
@@ -137,8 +147,8 @@
 
 		<!-- Mobile Bottom Navigation (App-like) -->
 		<nav class="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-50 safe-area-pb shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-			<div class="flex items-center justify-between px-2 sm:px-4 py-2">
-				{#each navigation.slice(0, 5) as item} <!-- Limit to 5 items to fit well on mobile -->
+			<div class="flex items-center justify-between px-2 py-2 overflow-x-auto gap-2 scrollbar-none">
+				{#each navigation as item} <!-- Show all items -->
 					<a
 						href={item.href}
 						class="flex flex-col items-center justify-center w-full gap-1 p-1.5 rounded-xl transition-all {page.url.pathname.startsWith(item.href) ? 'text-gray-900 scale-105' : 'text-gray-400 hover:text-gray-600'}"

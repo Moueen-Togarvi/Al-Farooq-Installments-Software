@@ -8,16 +8,22 @@ export const handle: Handle = async ({ event, resolve }) => {
         if (!sessionId) {
             event.locals.user = null;
         } else {
-            const user = await prisma.user.findUnique({
-                where: { id: sessionId },
-                select: { id: true, email: true, name: true, role: true }
-            });
+            try {
+                const user = await prisma.user.findUnique({
+                    where: { id: sessionId },
+                    select: { id: true, email: true, name: true, role: true }
+                });
 
-            if (user) {
-                event.locals.user = user;
-            } else {
+                if (user) {
+                    event.locals.user = user;
+                } else {
+                    event.locals.user = null;
+                    event.cookies.delete('session', { path: '/' });
+                }
+            } catch (dbErr) {
+                console.error('DATABASE CONNECTIVITY ERROR IN HOOKS:', dbErr);
+                // If DB is down, we can't verify session, treat as null user
                 event.locals.user = null;
-                event.cookies.delete('session', { path: '/' });
             }
         }
 

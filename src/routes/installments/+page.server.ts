@@ -8,6 +8,7 @@ export const load: PageServerLoad = async () => {
             customer: true,
             product: true,
             installments: {
+                select: { status: true },
                 orderBy: { serialNumber: 'asc' }
             }
         },

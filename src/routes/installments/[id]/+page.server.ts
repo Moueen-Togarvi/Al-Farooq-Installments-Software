@@ -4,25 +4,30 @@ import { serializeDecimals } from '$lib/utils';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
-    const plan = await prisma.installmentPlan.findUnique({
-        where: { id: params.id },
-        include: {
-            customer: true,
-            product: true,
-            installments: {
-                orderBy: { serialNumber: 'asc' },
-                include: {
-                    payments: true
+    try {
+        const plan = await prisma.installmentPlan.findUnique({
+            where: { id: params.id },
+            include: {
+                customer: true,
+                product: true,
+                installments: {
+                    orderBy: { serialNumber: 'asc' },
+                    include: {
+                        payments: true
+                    }
                 }
             }
+        });
+
+        if (!plan) {
+            return fail(404, { error: 'Plan not found' } as any);
         }
-    });
 
-    if (!plan) {
-        throw fail(404, { error: 'Plan not found' });
+        return { plan: serializeDecimals(plan) };
+    } catch (err: any) {
+        console.error('DATABASE ERROR IN LEDGER LOAD:', err);
+        return fail(500, { error: 'Database is currently unreachable. Please try again in a moment.' } as any);
     }
-
-    return { plan: serializeDecimals(plan) };
 };
 
 export const actions: Actions = {
@@ -48,7 +53,7 @@ export const actions: Actions = {
                 if (!installment) throw new Error('Installment not found');
 
                 // Record payment
-                await tx.payment.create({
+                const payment = await tx.payment.create({
                     data: {
                         installmentId,
                         amount,
@@ -57,12 +62,15 @@ export const actions: Actions = {
                     }
                 });
 
-                // Update installment
-                const newReceived = parseFloat(installment.receivedAmount.toString()) + amount;
-                const totalDue = parseFloat(installment.amount.toString());
-                let status: 'PAID' | 'PARTIAL' | 'UNPAID' = 'PARTIAL';
+                console.log(`Payment recorded: ${payment.id} for installment ${installmentId}`);
 
-                if (newReceived >= totalDue) {
+                // Update installment with robust decimal handling
+                const currentReceived = parseFloat(installment.receivedAmount.toString());
+                const totalDue = parseFloat(installment.amount.toString());
+                const newReceived = currentReceived + amount;
+
+                let status: 'PAID' | 'PARTIAL' | 'UNPAID' = 'PARTIAL';
+                if (newReceived >= totalDue - 0.01) { // Floating point safety
                     status = 'PAID';
                 } else if (newReceived <= 0) {
                     status = 'UNPAID';
@@ -101,11 +109,12 @@ export const actions: Actions = {
                         where: { id: installment.planId },
                         data: { status: 'CLOSED' }
                     });
+                    console.log(`Plan ${installment.planId} closed.`);
                 }
             });
-        } catch (err) {
-            console.error(err);
-            return fail(500, { error: 'Failed to record payment' });
+        } catch (err: any) {
+            console.error('PAYMENT ERROR:', err);
+            return fail(500, { error: err.message || 'Failed to record payment' });
         }
 
         return { success: true };

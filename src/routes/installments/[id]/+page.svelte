@@ -6,7 +6,9 @@
 		CheckCircle2, 
 		XCircle,
 		DollarSign,
-		CalendarDays
+		CalendarDays,
+		Banknote,
+		AlertCircle
 	} from 'lucide-svelte';
 
 	let { data, form } = $props();
@@ -67,6 +69,37 @@
 			<Printer class="w-4 h-4" />
 			Print Ledger
 		</button>
+	</div>
+	
+	<!-- Financial Summary Bar (Digital Only) -->
+	<div class="grid grid-cols-1 md:grid-cols-3 gap-4 print:hidden">
+		<div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
+			<div>
+				<p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none mb-1">Net Sale Total</p>
+				<p class="text-lg font-black text-gray-900 font-mono tracking-tighter">Rs. {Number(data.plan.totalAmount).toLocaleString()}</p>
+			</div>
+			<div class="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100">
+				<DollarSign class="w-5 h-5 text-gray-400" />
+			</div>
+		</div>
+		<div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
+			<div>
+				<p class="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] leading-none mb-1">Total Received</p>
+				<p class="text-lg font-black text-emerald-600 font-mono tracking-tighter">Rs. { (totalReceivedSum + Number(data.plan.downPayment || 0)).toLocaleString() }</p>
+			</div>
+			<div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center border border-emerald-100">
+				<Banknote class="w-5 h-5 text-emerald-500" />
+			</div>
+		</div>
+		<div class="bg-white p-4 rounded-xl border border-blue-200 shadow-sm flex items-center justify-between ring-1 ring-blue-50 ring-offset-2">
+			<div>
+				<p class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] leading-none mb-1">Final Pending</p>
+				<p class="text-lg font-black text-blue-600 font-mono tracking-tighter">Rs. {Number(data.plan.remainingBalance).toLocaleString()}</p>
+			</div>
+			<div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center border border-blue-100">
+				<AlertCircle class="w-5 h-5 text-blue-500" />
+			</div>
+		</div>
 	</div>
 
 	<!-- Printable Area -->
@@ -170,10 +203,13 @@
 									</div>
 									<span class="hidden print:inline font-mono text-xs">{formatDateShort(installment.dueDate)}</span>
 								{:else}
-									<div class="flex items-center justify-center gap-2">
-										<span class="text-gray-600 print:text-black font-semibold font-mono text-xs">{formatDateShort(installment.paymentDate)}</span>
-										<div class="print:hidden w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shadow-sm">
-											<CheckCircle2 class="w-3.5 h-3.5 text-green-600" />
+									<div class="flex items-center justify-center">
+										<div class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-100 shadow-sm group-hover:scale-105 transition-transform">
+											<div class="flex items-center gap-1.5">
+												<Banknote class="w-3.5 h-3.5 text-emerald-600" />
+												<span class="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Paisa Paid</span>
+											</div>
+											<span class="text-[9px] font-bold text-emerald-600/70 font-mono">{formatDateShort(installment.paymentDate)}</span>
 										</div>
 									</div>
 								{/if}
@@ -223,6 +259,9 @@
 					return async ({ result }) => {
 						if (result.type === 'success') {
 							selectedInstallment = null;
+						} else if (result.type === 'failure' || result.type === 'error') {
+							const errorMsg = result.data?.error || (result.type === 'error' ? 'A server error occurred' : 'Failed to record payment');
+							alert(errorMsg);
 						}
 					};
 				}}
