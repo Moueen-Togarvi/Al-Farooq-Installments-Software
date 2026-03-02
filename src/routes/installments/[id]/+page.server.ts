@@ -31,6 +31,8 @@ export const actions: Actions = {
         const installmentId = data.get('installmentId') as string;
         const amount = parseFloat(data.get('amount') as string);
         const method = data.get('method') as string || 'CASH';
+        const paymentDateStr = data.get('paymentDate') as string;
+        const paymentDateObj = paymentDateStr ? new Date(paymentDateStr) : new Date();
 
         if (!installmentId || isNaN(amount)) {
             return fail(400, { error: 'Missing or invalid fields' });
@@ -51,7 +53,7 @@ export const actions: Actions = {
                         installmentId,
                         amount,
                         method,
-                        paymentDate: new Date()
+                        paymentDate: paymentDateObj
                     }
                 });
 
@@ -72,7 +74,7 @@ export const actions: Actions = {
                         receivedAmount: newReceived,
                         pendingAmount: Math.max(0, totalDue - newReceived),
                         status,
-                        paymentDate: status === 'PAID' ? new Date() : installment.paymentDate
+                        paymentDate: status === 'PAID' ? paymentDateObj : installment.paymentDate
                     }
                 });
 

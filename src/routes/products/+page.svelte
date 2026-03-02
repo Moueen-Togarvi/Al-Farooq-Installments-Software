@@ -25,9 +25,23 @@
 	let installmentPrice = $state(0);
 	let downPayment = $state(0);
 	let durationMonths = $state(12);
+	
+	// Allow manual overrides of calculations
+	let customProfit = $state<number | null>(null);
+	let customMonthly = $state<number | null>(null);
 
-	let profit = $derived(installmentPrice - purchasePrice);
-	let monthlyAmount = $derived(durationMonths > 0 ? (installmentPrice - downPayment) / durationMonths : 0);
+	let profit = $derived(customProfit !== null ? customProfit : (installmentPrice - purchasePrice));
+	let monthlyAmount = $derived(customMonthly !== null ? customMonthly : (durationMonths > 0 ? (installmentPrice - downPayment) / durationMonths : 0));
+
+	// Reset custom values when source changes
+	$effect(() => {
+		let _ = purchasePrice + installmentPrice;
+		customProfit = null;
+	});
+	$effect(() => {
+		let _ = installmentPrice + downPayment + durationMonths;
+		customMonthly = null;
+	});
 
 	const filteredProducts = $derived(
 		data.products.filter((p: any) => 
@@ -57,8 +71,8 @@
 	</div>
 
 	<!-- Search & Filters -->
-	<div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex items-center gap-4">
-		<div class="relative flex-1">
+	<div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-wrap gap-4">
+		<div class="relative flex-1 min-w-[300px]">
 			<Search class="absolute left-3 inset-y-0 my-auto w-5 h-5 text-gray-400" />
 			<input 
 				type="text" 
@@ -69,96 +83,184 @@
 		</div>
 	</div>
 
-	<!-- Product Table -->
-	<div class="bg-white rounded-xl shadow-sm border-2 border-gray-200 overflow-x-auto">
-		<table class="w-full text-left border-collapse min-w-[1000px]">
-			<thead>
-				<tr class="bg-gray-50 border-b-2 border-gray-200">
-					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Product Info</th>
-					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Pricing Engine</th>
-					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Plan Terms</th>
-					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Calculated Profit</th>
-					<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Actions</th>
-				</tr>
-			</thead>
-			<tbody class="divide-y-2 divide-gray-100">
-				{#each filteredProducts as product}
-					<tr class="hover:bg-gray-50 transition-colors group">
-						<td class="px-6 py-4">
-							<div class="space-y-1">
-								<h3 class="text-sm font-black text-black">{product.name}</h3>
-								<span class="inline-block px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-600 border border-gray-200">
-									{product.category}
-								</span>
-							</div>
-						</td>
-						<td class="px-6 py-4">
-							<div class="space-y-0.5">
-								<p class="text-xs font-bold text-gray-600">Cash: <span class="font-black text-gray-900">{formatCurrency(product.cashPrice)}</span></p>
-								<p class="text-xs font-bold text-gray-600">Plan: <span class="font-black text-gray-900">{formatCurrency(product.installmentPrice)}</span></p>
-							</div>
-						</td>
-						<td class="px-6 py-4">
-							<div class="space-y-0.5">
-								<p class="text-xs font-bold text-gray-600">Advance: <span class="font-black text-gray-900">{formatCurrency(product.downPayment)}</span></p>
-								<p class="text-xs font-bold text-gray-600">{product.durationMonths}mo &times; <span class="font-black text-gray-900">{formatCurrency(product.monthlyAmount)}</span></p>
-							</div>
-						</td>
-						<td class="px-6 py-4">
-							<div class="flex items-center gap-2 bg-emerald-50 w-fit px-3 py-1.5 rounded-lg border border-emerald-100">
-								<TrendingUp class="w-4 h-4 text-emerald-600" />
-								<span class="text-sm font-black text-emerald-700">{formatCurrency(product.profit)}</span>
-							</div>
-						</td>
-						<td class="px-6 py-4">
-							<div class="flex items-center justify-center">
-								<div class="flex items-center gap-1 bg-gray-100 p-1.5 rounded-lg border border-gray-200">
-									<button 
-										onclick={() => {
-											editingProduct = { ...product };
-											purchasePrice = product.purchasePrice;
-											cashPrice = product.cashPrice;
-											installmentPrice = product.installmentPrice;
-											downPayment = product.downPayment;
-											durationMonths = product.durationMonths;
-										}}
-										class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white text-[10px] font-black uppercase tracking-wider text-blue-600 border border-blue-100 hover:bg-blue-600 hover:text-white transition-colors shadow-sm"
-									>
-										<Edit2 class="w-3.5 h-3.5" /> Edit
-									</button>
-									<form 
-										method="POST" 
-										action="?/delete&id={product.id}" 
-										onsubmit={(e) => { if(!confirm('Are you sure you want to delete this product?')) e.preventDefault(); }} 
-										use:enhance={() => {
-											return async ({ result }) => {
-												if (result.type === 'failure') {
-													alert(result.data?.error || 'Failed to delete product.');
-												}
-											};
-										}}
-									>
-										<button class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white text-[10px] font-black uppercase tracking-wider text-red-600 border border-red-100 hover:bg-red-600 hover:text-white transition-colors shadow-sm">
-											<Trash2 class="w-3.5 h-3.5" /> Delete
-										</button>
-									</form>
+	<!-- Product List (Responsive Layout) -->
+	<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+		<!-- Desktop Table View -->
+		<div class="hidden md:block overflow-x-auto">
+			<table class="w-full text-left border-collapse min-w-[1000px]">
+				<thead>
+					<tr class="bg-gray-50 border-b border-gray-200">
+						<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Product Info</th>
+						<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Pricing Engine</th>
+						<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Plan Terms</th>
+						<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Calculated Profit</th>
+						<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Actions</th>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-gray-100">
+					{#each filteredProducts as product}
+						<tr class="hover:bg-gray-50 transition-colors group">
+							<td class="px-6 py-4">
+								<div class="space-y-1.5">
+									<h3 class="text-sm font-black text-black">{product.name}</h3>
+									<span class="inline-block px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-gray-100 text-gray-600 border border-gray-200 shadow-sm">
+										{product.category}
+									</span>
 								</div>
+							</td>
+							<td class="px-6 py-4">
+								<div class="space-y-0.5">
+									<p class="text-xs font-bold text-gray-600">Cash: <span class="font-black text-gray-900">{formatCurrency(product.cashPrice)}</span></p>
+									<p class="text-xs font-bold text-gray-600">Plan: <span class="font-black text-gray-900">{formatCurrency(product.installmentPrice)}</span></p>
+								</div>
+							</td>
+							<td class="px-6 py-4">
+								<div class="space-y-0.5">
+									<p class="text-xs font-bold text-gray-600">Advance: <span class="font-black text-gray-900">{formatCurrency(product.downPayment)}</span></p>
+									<p class="text-xs font-bold text-gray-600">{product.durationMonths}mo &times; <span class="font-black text-gray-900">{formatCurrency(product.monthlyAmount)}</span></p>
+								</div>
+							</td>
+							<td class="px-6 py-4">
+								<div class="flex items-center gap-2 bg-emerald-50 w-fit px-3 py-1.5 rounded-lg border border-emerald-100">
+									<TrendingUp class="w-4 h-4 text-emerald-600" />
+									<span class="text-sm font-black text-emerald-700">{formatCurrency(product.profit)}</span>
+								</div>
+							</td>
+							<td class="px-6 py-4">
+								<div class="flex items-center justify-center">
+									<div class="flex items-center gap-2 bg-gray-50/50 p-1.5 rounded-lg border border-gray-100">
+										<button 
+											onclick={() => {
+												editingProduct = { ...product };
+												purchasePrice = product.purchasePrice;
+												cashPrice = product.cashPrice;
+												installmentPrice = product.installmentPrice;
+												downPayment = product.downPayment;
+												durationMonths = product.durationMonths;
+												customProfit = product.profit;
+												customMonthly = product.monthlyAmount;
+											}}
+											class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white text-[10px] font-black uppercase tracking-widest text-blue-600 border border-blue-100 hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-95"
+										>
+											<Edit2 class="w-3.5 h-3.5" /> Edit
+										</button>
+										<form 
+											method="POST" 
+											action="?/delete&id={product.id}" 
+											onsubmit={(e) => { if(!confirm('Are you sure you want to delete this product?')) e.preventDefault(); }} 
+											use:enhance={() => {
+												return async ({ result }) => {
+													if (result.type === 'failure') {
+														alert(result.data?.error || 'Failed to delete product.');
+													}
+												};
+											}}
+										>
+											<button class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white text-[10px] font-black uppercase tracking-widest text-red-600 border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm active:scale-95">
+												<Trash2 class="w-3.5 h-3.5" /> Delete
+											</button>
+										</form>
+									</div>
+								</div>
+							</td>
+						</tr>
+					{:else}
+						<tr>
+							<td colspan="5" class="px-6 py-16 text-center">
+								<div class="flex flex-col items-center gap-2">
+									<Tag class="w-10 h-10 text-gray-300 mb-2" />
+									<p class="text-black font-black uppercase tracking-widest text-sm">No products cataloged</p>
+									<p class="text-xs font-bold text-gray-500">Start by adding your first product to the gallery</p>
+								</div>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+
+		<!-- Mobile Card View -->
+		<div class="md:hidden flex flex-col divide-y divide-gray-100">
+			{#each filteredProducts as product}
+				<div class="p-4 space-y-4">
+					<div class="flex items-start justify-between">
+						<div>
+							<h3 class="text-base font-black text-black leading-tight">{product.name}</h3>
+							<span class="inline-block mt-1 px-2.5 py-1 rounded text-[9px] font-black uppercase tracking-widest bg-gray-100 text-gray-600 border border-gray-200 shadow-sm">
+								{product.category}
+							</span>
+						</div>
+						<div class="flex items-center gap-1.5 bg-emerald-50 px-2 py-1.5 rounded-lg border border-emerald-100">
+							<TrendingUp class="w-3.5 h-3.5 text-emerald-600" />
+							<span class="text-[10px] font-black uppercase tracking-widest text-emerald-700">{formatCurrency(product.profit)}</span>
+						</div>
+					</div>
+					
+					<div class="grid grid-cols-2 gap-2 bg-gray-50 rounded-xl p-3 border border-gray-100">
+						<div>
+							<p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Cash Price</p>
+							<p class="text-xs font-black text-gray-900">{formatCurrency(product.cashPrice)}</p>
+						</div>
+						<div>
+							<p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Plan Price</p>
+							<p class="text-xs font-black text-gray-900">{formatCurrency(product.installmentPrice)}</p>
+						</div>
+						<div class="col-span-2 mt-1 border-t border-gray-200/60 pt-2 grid grid-cols-2 gap-2">
+							<div>
+								<p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Advance</p>
+								<p class="text-xs font-black text-gray-900">{formatCurrency(product.downPayment)}</p>
 							</div>
-						</td>
-					</tr>
-				{:else}
-					<tr>
-						<td colspan="5" class="px-6 py-16 text-center">
-							<div class="flex flex-col items-center gap-2">
-								<Tag class="w-10 h-10 text-gray-300 mb-2" />
-								<p class="text-black font-black uppercase tracking-widest text-sm">No products cataloged</p>
-								<p class="text-xs font-bold text-gray-500">Start by adding your first product to the gallery</p>
+							<div>
+								<p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Monthly Inst.</p>
+								<p class="text-xs font-black text-blue-600">{product.durationMonths}m &times; {formatCurrency(product.monthlyAmount)}</p>
 							</div>
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
+						</div>
+					</div>
+
+					<div class="flex items-center justify-between gap-2 pt-1 border-t border-gray-100">
+						<button 
+							onclick={() => {
+								editingProduct = { ...product };
+								purchasePrice = product.purchasePrice;
+								cashPrice = product.cashPrice;
+								installmentPrice = product.installmentPrice;
+								downPayment = product.downPayment;
+								durationMonths = product.durationMonths;
+								customProfit = product.profit;
+								customMonthly = product.monthlyAmount;
+							}}
+							class="flex-1 flex justify-center items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-50 text-[10px] font-black uppercase tracking-widest text-blue-700 active:scale-95 transition-all"
+						>
+							<Edit2 class="w-3.5 h-3.5" /> Edit Mode
+						</button>
+						<form 
+							method="POST" 
+							action="?/delete&id={product.id}" 
+							onsubmit={(e) => { if(!confirm('Are you sure you want to delete this product?')) e.preventDefault(); }} 
+							use:enhance={() => {
+								return async ({ result }) => {
+									if (result.type === 'failure') {
+										alert(result.data?.error || 'Failed to delete product.');
+									}
+								};
+							}}
+							class="flex-1"
+						>
+							<button class="w-full flex justify-center items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-[10px] font-black uppercase tracking-widest text-red-600 active:scale-95 transition-all">
+								<Trash2 class="w-3.5 h-3.5" /> Delete
+							</button>
+						</form>
+					</div>
+				</div>
+			{:else}
+				<div class="px-6 py-12 text-center">
+					<div class="flex flex-col items-center gap-2">
+						<Tag class="w-10 h-10 text-gray-300 mb-2" />
+						<p class="text-black font-black uppercase tracking-widest text-sm">No products cataloged</p>
+					</div>
+				</div>
+			{/each}
+		</div>
 	</div>
 </div>
 
@@ -246,16 +348,31 @@
 					</div>
 				</div>
 
-				<!-- Live Preview Calculations -->
+				<!-- Editable Preview Calculations -->
 				<div class="bg-gray-900 rounded-xl p-6 text-white shadow-md">
 					<div class="grid grid-cols-2 gap-6">
 						<div>
-							<p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Projected Profit</p>
-							<p class="text-2xl font-bold mt-1">{formatCurrency(profit)}</p>
+							<p class="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+								Projected Profit
+							</p>
+							<p class="text-2xl font-black mt-1 text-emerald-400">{formatCurrency(profit)}</p>
+							<input type="hidden" name="profit" value={profit} />
 						</div>
-						<div class="text-right">
-							<p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Monthly Installment</p>
-							<p class="text-2xl font-bold mt-1">{formatCurrency(monthlyAmount)}</p>
+						<div>
+							<label for="monthlyAmount" class="block text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+								Monthly Inst. <Edit2 class="w-3 h-3 text-blue-500/50" />
+							</label>
+							<div class="relative">
+								<span class="absolute left-0 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-400">Rs</span>
+								<input 
+									type="number" 
+									name="monthlyAmount" 
+									id="monthlyAmount" 
+									value={monthlyAmount}
+									oninput={(e) => customMonthly = parseFloat((e.target as HTMLInputElement).value) || 0}
+									class="w-full bg-transparent border-b-2 border-gray-700/50 focus:border-blue-500 outline-none text-2xl font-black text-white pl-8 py-1 transition-colors"
+								/>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -365,7 +482,37 @@
 					</div>
 				</div>
 
-				<div class="flex items-center gap-3 pt-4 border-t border-gray-100">
+				<!-- Editable Preview Calculations (Edit) -->
+				<div class="bg-gray-900 flex-none rounded-xl p-6 text-white shadow-md pb-24 lg:pb-6">
+					<div class="grid grid-cols-2 gap-4 sm:gap-6">
+						<div>
+							<p class="text-[10px] sm:text-xs font-black text-emerald-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+								Projected Profit
+							</p>
+							<p class="text-xl md:text-2xl font-black mt-1 text-emerald-400">{formatCurrency(profit)}</p>
+							<input type="hidden" name="profit" value={profit} />
+						</div>
+						<div>
+							<label for="edit_monthlyAmount" class="block text-[10px] sm:text-xs font-black text-blue-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+								Monthly Inst. <Edit2 class="w-3 h-3 text-blue-500/50" />
+							</label>
+							<div class="relative">
+								<span class="absolute left-0 top-1/2 -translate-y-1/2 text-sm sm:text-lg font-bold text-gray-400">Rs</span>
+								<input 
+									type="number" 
+									name="monthlyAmount" 
+									id="edit_monthlyAmount" 
+									value={monthlyAmount}
+									oninput={(e) => customMonthly = parseFloat((e.target as HTMLInputElement).value) || 0}
+									class="w-full bg-transparent border-b-2 border-gray-700/50 focus:border-blue-500 outline-none text-xl md:text-2xl font-black text-white px-0 pl-6 sm:pl-8 py-1 transition-colors"
+								/>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Fixed Bottom Action Bar inside Modal -->
+				<div class="fixed lg:absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-20 flex items-center gap-3">
 					<button 
 						type="button"
 						onclick={() => editingProduct = null}

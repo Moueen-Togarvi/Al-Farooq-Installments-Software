@@ -67,38 +67,36 @@
 	}
 </script>
 
-<div class="max-w-5xl mx-auto space-y-8">
+<div class="max-w-5xl mx-auto space-y-6">
 	<!-- Header -->
-	<div class="flex items-center justify-between">
-		<div class="flex items-center gap-4">
-			<a href="/installments" class="p-3 rounded-2xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm">
-				<ArrowLeft class="w-5 h-5" />
-			</a>
-			<div>
-				<h1 class="text-2xl font-black text-slate-800 tracking-tight leading-none">Create New Sale</h1>
-				<p class="text-sm text-slate-400 font-bold mt-2 uppercase tracking-widest leading-none">Installment Plan Configurator</p>
-			</div>
+	<div class="flex items-center gap-4">
+		<a href="/installments" class="p-2.5 rounded-xl bg-white border border-gray-200 text-gray-400 hover:text-black hover:border-black transition-all shadow-sm active:scale-95">
+			<ArrowLeft class="w-5 h-5" />
+		</a>
+		<div>
+			<h1 class="text-2xl font-black text-gray-900 tracking-tight leading-none">Create New Sale</h1>
+			<p class="text-xs font-bold text-gray-500 mt-1.5 uppercase tracking-widest leading-none">Installment Plan Configurator</p>
 		</div>
 	</div>
 
-	<form method="POST" use:enhance class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+	<form method="POST" use:enhance class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 		<!-- Left: Selection & Options -->
-		<div class="lg:col-span-2 space-y-8">
+		<div class="lg:col-span-2 space-y-6">
 			<!-- Customer Selection -->
-			<div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 flex flex-col items-center">
-				<div class="flex items-center gap-2 text-slate-400 mb-6 self-start">
+			<div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+				<div class="flex items-center gap-2 text-gray-900 border-b border-gray-100 pb-3 mb-5">
 					<User class="w-4 h-4" />
-					<span class="text-[10px] font-black uppercase tracking-widest">Step 1: Select Customer</span>
+					<span class="text-sm font-semibold">Step 1: Select Customer</span>
 				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-					<div class="space-y-4">
-						<label for="customerId" class="text-lg font-black text-slate-800 ml-1">Choose Customer</label>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
+					<div class="space-y-2">
+						<label for="customerId" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Choose Customer</label>
 						<select 
 							name="customerId" 
 							id="customerId" 
 							bind:value={selectedCustomerId}
 							required 
-							class="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-[1.5rem] focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-slate-700 font-bold appearance-none cursor-pointer h-16"
+							class="w-full px-3 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm appearance-none cursor-pointer"
 						>
 							<option value="">Select a customer...</option>
 							{#each data.customers as customer}
@@ -107,14 +105,14 @@
 						</select>
 					</div>
 					{#if selectedCustomer}
-						<div class="bg-blue-50/50 p-6 rounded-3xl border border-blue-100/30 flex items-center gap-4 animate-in fade-in slide-in-from-left-4">
-							<div class="w-16 h-16 rounded-2xl bg-white flex items-center justify-center font-black text-blue-600 shadow-sm border border-blue-100/50 shrink-0">
+						<div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex items-center gap-3 animate-in fade-in slide-in-from-left-4 shadow-sm">
+							<div class="w-12 h-12 rounded-full bg-black flex items-center justify-center font-black text-white shadow-sm shrink-0 text-sm">
 								{selectedCustomer.name.substring(0, 2).toUpperCase()}
 							</div>
 							<div class="space-y-1 overflow-hidden">
-								<p class="font-black text-slate-800 truncate">{selectedCustomer.name}</p>
-								<p class="text-[10px] font-black text-blue-500 uppercase tracking-widest">{selectedCustomer.mobile}</p>
-								<p class="text-[10px] text-slate-400 font-bold truncate">{selectedCustomer.address}</p>
+								<p class="text-sm font-black text-gray-900 truncate">{selectedCustomer.name}</p>
+								<p class="text-[9px] font-black text-blue-600 uppercase tracking-widest leading-none">{selectedCustomer.mobile}</p>
+								<p class="text-[10px] text-gray-500 font-bold truncate leading-none">{selectedCustomer.address}</p>
 							</div>
 						</div>
 					{/if}
@@ -122,20 +120,20 @@
 			</div>
 
 			<!-- Product Selection -->
-			<div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 flex flex-col items-center">
-				<div class="flex items-center gap-2 text-slate-400 mb-6 self-start">
+			<div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+				<div class="flex items-center gap-2 text-gray-900 border-b border-gray-100 pb-3 mb-5">
 					<Package class="w-4 h-4" />
-					<span class="text-[10px] font-black uppercase tracking-widest">Step 2: Select Product</span>
+					<span class="text-sm font-semibold">Step 2: Select Product</span>
 				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-					<div class="space-y-4">
-						<label for="productId" class="text-lg font-black text-slate-800 ml-1">Choose Product</label>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
+					<div class="space-y-2">
+						<label for="productId" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Choose Product</label>
 						<select 
 							name="productId" 
 							id="productId" 
 							bind:value={selectedProductId}
 							required 
-							class="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-[1.5rem] focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-slate-700 font-bold appearance-none cursor-pointer h-16"
+							class="w-full px-3 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm appearance-none cursor-pointer"
 						>
 							<option value="">Select a product...</option>
 							{#each data.products as product}
@@ -144,14 +142,14 @@
 						</select>
 					</div>
 					{#if selectedProduct}
-						<div class="grid grid-cols-2 gap-4 w-full animate-in fade-in slide-in-from-left-4">
-							<div class="bg-slate-50 p-5 rounded-3xl border border-slate-100">
-								<p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Installment Price</p>
-								<p class="text-md font-black text-slate-800 mt-1">{formatCurrency(selectedProduct.installmentPrice)}</p>
+						<div class="grid grid-cols-2 gap-3 w-full animate-in fade-in slide-in-from-left-4">
+							<div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center">
+								<p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Installment Price</p>
+								<p class="text-sm font-black text-gray-900">{formatCurrency(selectedProduct.installmentPrice)}</p>
 							</div>
-							<div class="bg-emerald-50/50 p-5 rounded-3xl border border-emerald-100/30">
-								<p class="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Profit</p>
-								<p class="text-md font-black text-emerald-600 mt-1">{formatCurrency(selectedProduct.profit)}</p>
+							<div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100 shadow-sm flex flex-col justify-center">
+								<p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">Calculated Profit</p>
+								<p class="text-sm font-black text-emerald-700">{formatCurrency(selectedProduct.profit)}</p>
 							</div>
 						</div>
 					{/if}
@@ -159,43 +157,43 @@
 			</div>
 
 			<!-- Plan Configuration -->
-			<div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 flex flex-col items-center">
-				<div class="flex items-center gap-2 text-slate-400 mb-6 self-start">
+			<div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+				<div class="flex items-center gap-2 text-gray-900 border-b border-gray-100 pb-3 mb-5">
 					<Clock class="w-4 h-4" />
-					<span class="text-[10px] font-black uppercase tracking-widest">Step 3: Plan Setup</span>
+					<span class="text-sm font-semibold">Step 3: Plan Setup</span>
 				</div>
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
-					<div class="space-y-4">
-						<label for="startDate" class="text-sm font-black text-slate-800 ml-1 uppercase tracking-widest">Agreement Date</label>
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-5 w-full">
+					<div class="space-y-2">
+						<label for="startDate" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Agreement Date</label>
 						<input 
 							type="date" 
 							name="startDate" 
 							id="startDate" 
 							bind:value={startDate}
 							required 
-							class="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-[1.5rem] focus:bg-white focus:border-blue-500 outline-none transition-all text-slate-700 font-bold h-16" 
+							class="w-full px-3 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" 
 						/>
 					</div>
-					<div class="space-y-4">
-						<label for="durationMonths" class="text-sm font-black text-slate-800 ml-1 uppercase tracking-widest">Duration (Months)</label>
+					<div class="space-y-2">
+						<label for="durationMonths" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Duration (Months)</label>
 						<input 
 							type="number" 
 							name="durationMonths" 
 							id="durationMonths" 
 							bind:value={customDuration}
 							placeholder={selectedProduct?.durationMonths?.toString() ?? "12"}
-							class="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-[1.5rem] focus:bg-white focus:border-blue-500 outline-none transition-all text-slate-700 font-bold h-16" 
+							class="w-full px-3 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" 
 						/>
 					</div>
-					<div class="space-y-4">
-						<label for="downPayment" class="text-sm font-black text-slate-800 ml-1 uppercase tracking-widest">Advance Payment</label>
+					<div class="space-y-2">
+						<label for="downPayment" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Advance Payment</label>
 						<input 
 							type="number" 
 							name="downPayment" 
 							id="downPayment" 
 							bind:value={customDownPayment}
 							placeholder={selectedProduct?.downPayment?.toString() ?? "0"}
-							class="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-[1.5rem] focus:bg-white focus:border-blue-500 outline-none transition-all text-slate-700 font-bold h-16" 
+							class="w-full px-3 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" 
 						/>
 					</div>
 				</div>
@@ -203,35 +201,35 @@
 		</div>
 
 		<!-- Right: Summary & Preview -->
-		<div class="space-y-8">
-			<div class="bg-blue-600 rounded-[3rem] p-8 text-white shadow-2xl shadow-blue-200 sticky top-28">
-				<h3 class="text-xl font-black mb-8 border-b border-blue-500/50 pb-4">Sale Summary</h3>
+		<div class="space-y-6">
+			<div class="bg-gray-900 rounded-xl p-6 text-white shadow-xl sticky top-28">
+				<h3 class="text-xs font-black mb-5 border-b border-gray-700/50 pb-3 uppercase tracking-widest">Sale Summary</h3>
 				
-				<div class="space-y-6">
-					<div class="flex justify-between items-center bg-blue-700/30 p-4 rounded-2xl border border-blue-500/20">
-						<span class="text-xs font-bold text-blue-200 uppercase tracking-widest">Installment Total</span>
-						<span class="text-xl font-black">{formatCurrency(totalAmount)}</span>
+				<div class="space-y-4">
+					<div class="flex justify-between items-center bg-gray-800 p-3 rounded-lg border border-gray-700 shadow-inner">
+						<span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Installment Total</span>
+						<span class="text-sm font-black">{formatCurrency(totalAmount)}</span>
 					</div>
-					<div class="flex justify-between items-center">
-						<span class="text-xs font-bold text-blue-200 uppercase tracking-widest">Advance Payment</span>
-						<span class="text-md font-black">-{formatCurrency(downPayment)}</span>
+					<div class="flex justify-between items-center px-2 py-1">
+						<span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Advance Payment</span>
+						<span class="text-xs font-black text-red-400">-{formatCurrency(downPayment)}</span>
 					</div>
-					<div class="flex justify-between items-center border-t border-blue-500/50 pt-6">
-						<span class="text-xs font-bold text-blue-200 uppercase tracking-widest">Balance to Pay</span>
-						<span class="text-2xl font-black">{formatCurrency(remainingBalance)}</span>
+					<div class="flex justify-between items-center border-t border-gray-700/50 pt-4 px-2">
+						<span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Balance to Pay</span>
+						<span class="text-lg font-black text-white">{formatCurrency(remainingBalance)}</span>
 					</div>
-					<div class="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/10 mt-8 text-center">
-						<p class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-200 mb-1">Monthly Installment</p>
-						<p class="text-3xl font-black">{formatCurrency(monthlyAmount)}</p>
-						<p class="text-[10px] font-bold text-blue-100 mt-2 italic">For {duration} months</p>
+					<div class="bg-gradient-to-br from-gray-800 to-gray-900 p-5 rounded-xl border border-gray-700 mt-6 text-center shadow-inner">
+						<p class="text-[9px] font-black uppercase tracking-[0.2em] text-blue-400 mb-1.5">Monthly Installment</p>
+						<p class="text-xl font-black text-white">{formatCurrency(monthlyAmount)}</p>
+						<p class="text-[9px] font-bold text-gray-500 mt-2 uppercase tracking-widest">For {duration} months</p>
 					</div>
 				</div>
 
 				<button 
 					type="submit"
-					class="w-full mt-10 py-5 bg-white text-blue-600 font-black uppercase tracking-[0.2em] rounded-3xl shadow-xl hover:bg-slate-50 active:scale-95 transition-all text-xs"
+					class="w-full mt-8 py-3.5 bg-white text-black font-black uppercase tracking-widest rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:bg-gray-100 active:scale-95 transition-all text-[10px] flex items-center justify-center gap-2"
 				>
-					Generate Plan & Sale
+					<CheckCircle2 class="w-4 h-4" /> Finalize Sale
 				</button>
 			</div>
 
@@ -240,45 +238,43 @@
 
 			<!-- Schedule Editor -->
 			{#if customSchedule.length > 0}
-				<div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 mb-8">
-					<div class="flex items-center justify-between mb-6">
-						<h3 class="text-sm font-black text-slate-800 uppercase tracking-[0.1em] flex items-center gap-2">
-							<Calendar class="w-4 h-4 text-blue-500" />
-							Installment Schedule ({customSchedule.length} Months)
+				<div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
+					<div class="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
+						<h3 class="text-[10px] font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
+							<Calendar class="w-3.5 h-3.5 text-gray-500" />
+							Schedule ({customSchedule.length}m)
 						</h3>
 						{#if manuallyEdited}
 							<button 
 								type="button" 
 								onclick={resetSchedule}
-								class="px-3 py-1.5 bg-blue-50/50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors border border-blue-100"
+								class="px-2 py-1 bg-gray-50 text-gray-600 rounded text-[9px] font-black uppercase tracking-widest hover:bg-gray-100 transition-colors border border-gray-200 active:scale-95 shadow-sm"
 							>
-								Reset Auto-Calc
+								Reset
 							</button>
 						{/if}
 					</div>
 					
-					<div class="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+					<div class="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
 						{#each customSchedule as item, i}
-							<div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border {manuallyEdited ? 'border-amber-200 bg-amber-50/10' : 'border-transparent'} transition-colors">
-								<div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center font-black text-slate-400 shrink-0 shadow-sm">
+							<div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border {manuallyEdited ? 'border-amber-200 bg-amber-50/30' : 'border-gray-200'} transition-colors shadow-sm">
+								<div class="w-7 h-7 bg-white border border-gray-200 rounded flex items-center justify-center font-black text-gray-400 shrink-0 text-[10px] shadow-sm">
 									{item.serial}
 								</div>
 								<div class="flex-1">
-									<p class="text-[10px] font-black text-slate-400 uppercase leading-none mb-1.5">Due Date</p>
 									<input 
 										type="date" 
 										bind:value={customSchedule[i].date}
 										oninput={handleManualEdit}
-										class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+										class="w-full bg-white border border-gray-300 rounded text-[10px] font-bold text-gray-700 outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 p-1.5 transition-all"
 									/>
 								</div>
 								<div class="flex-1">
-									<p class="text-[10px] font-black text-slate-400 uppercase leading-none mb-1.5 justify-end flex">Amount (Rs)</p>
 									<input 
 										type="number" 
 										bind:value={customSchedule[i].amount}
 										oninput={handleManualEdit}
-										class="w-full text-right bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-blue-600 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+										class="w-full text-right bg-white border border-gray-300 rounded text-[10px] font-bold text-gray-900 outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 p-1.5 transition-all"
 									/>
 								</div>
 							</div>
@@ -287,19 +283,19 @@
 					
 					<!-- Validation warning if sum mismatches balance -->
 					{#if Math.abs(customSchedule.reduce((sum, item) => sum + Number(item.amount), 0) - remainingBalance) > 10}
-						<div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
-							<AlertCircle class="w-5 h-5 text-amber-500 shrink-0" />
+						<div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 shadow-sm">
+							<AlertCircle class="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
 							<div>
-								<p class="text-xs font-bold text-amber-800 uppercase tracking-wide">Schedule Mismatch</p>
-								<p class="text-xs text-amber-600 mt-1">
-									The sum of all installments ({formatCurrency(customSchedule.reduce((sum, item) => sum + Number(item.amount), 0))}) 
-									does not match the Balance to Pay ({formatCurrency(remainingBalance)}). Please adjust the amounts.
+								<p class="text-[9px] font-black text-red-700 uppercase tracking-widest">Mismatch</p>
+								<p class="text-[10px] font-bold text-red-600 mt-0.5 leading-tight">
+									Sum ({formatCurrency(customSchedule.reduce((sum, item) => sum + Number(item.amount), 0))}) 
+									≠ Balance ({formatCurrency(remainingBalance)}).
 								</p>
 							</div>
 						</div>
 					{:else if manuallyEdited}
-						<div class="mt-4 p-3 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-bold flex items-center gap-2 border border-emerald-100">
-							<CheckCircle2 class="w-4 h-4" /> Customized schedule matches balance!
+						<div class="mt-4 p-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm">
+							<CheckCircle2 class="w-3.5 h-3.5 text-emerald-600" /> Matches balance
 						</div>
 					{/if}
 				</div>

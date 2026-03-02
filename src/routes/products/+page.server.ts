@@ -29,8 +29,11 @@ export const actions: Actions = {
             return fail(400, { error: 'Duration must be at least 1 month' });
         }
 
-        const profit = installmentPrice - purchasePrice;
-        const monthlyAmount = (installmentPrice - downPayment) / durationMonths;
+        const rawProfit = parseFloat(data.get('profit') as string);
+        const profit = !isNaN(rawProfit) ? rawProfit : (installmentPrice - purchasePrice);
+
+        const rawMonthly = parseFloat(data.get('monthlyAmount') as string);
+        const monthlyAmount = !isNaN(rawMonthly) ? rawMonthly : ((installmentPrice - downPayment) / durationMonths);
 
         try {
             await prisma.product.create({
@@ -79,8 +82,11 @@ export const actions: Actions = {
             return fail(400, { error: 'Duration must be at least 1 month' });
         }
 
-        const profit = installmentPrice - purchasePrice;
-        const monthlyAmount = (installmentPrice - downPayment) / durationMonths;
+        const rawProfit = parseFloat(data.get('profit') as string);
+        const profit = !isNaN(rawProfit) ? rawProfit : (installmentPrice - purchasePrice);
+
+        const rawMonthly = parseFloat(data.get('monthlyAmount') as string);
+        const monthlyAmount = !isNaN(rawMonthly) ? rawMonthly : ((installmentPrice - downPayment) / durationMonths);
 
         try {
             await prisma.product.update({
