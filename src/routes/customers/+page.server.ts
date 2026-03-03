@@ -5,7 +5,14 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
     const customers = await prisma.customer.findMany({
-        include: {
+        select: {
+            id: true,
+            name: true,
+            cnic: true,
+            mobile: true,
+            address: true,
+            status: true,
+            referenceName: true,
             _count: {
                 select: { plans: { where: { status: 'ACTIVE' } } }
             }

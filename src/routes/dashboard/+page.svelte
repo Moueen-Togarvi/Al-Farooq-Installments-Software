@@ -69,7 +69,7 @@
 				</h3>
 				{#if data.todayDue.length > 0}
 					<span class="bg-black text-white text-[10px] font-black px-2.5 py-1 rounded-md tracking-widest uppercase">
-						{data.todayDue.filter(i => i.status !== 'PAID').length} REMAINING
+						{data.todayDue.filter((i: any) => i.status !== 'PAID').length} REMAINING
 					</span>
 				{/if}
 			</div>

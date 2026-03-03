@@ -5,6 +5,14 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
     const products = await prisma.product.findMany({
+        select: {
+            id: true,
+            name: true,
+            category: true,
+            purchasePrice: true,
+            cashPrice: true,
+            createdAt: true
+        },
         orderBy: { createdAt: 'desc' }
     });
     return { products: serializeDecimals(products) };

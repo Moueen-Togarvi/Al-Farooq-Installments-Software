@@ -44,11 +44,11 @@
 	}
 
 	function getPaidCount(plan: any) {
-		return plan.installments?.filter((i: any) => i.status === 'PAID').length || 0;
+		return plan.installments?.length || 0;
 	}
 
 	function getTotalCount(plan: any) {
-		return plan.installments?.length || 0;
+		return plan._count?.installments || 0;
 	}
 </script>
 

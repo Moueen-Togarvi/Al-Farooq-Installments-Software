@@ -15,6 +15,7 @@
 	let selectedInstallment = $state<any>(null);
 	let paymentAmount = $state(0);
 	let paymentDateStr = $state(new Date().toLocaleDateString('en-CA'));
+	let submitting = $state(false);
 
 	// Object to hold custom dates for each row so user can edit right in the table
 	let rowDates = $state<Record<string, string>>({});
@@ -56,7 +57,7 @@
 
 </script>
 
-<div class="max-w-4xl mx-auto space-y-6 pb-20">
+<div class="w-full max-w-4xl mx-auto space-y-6 pb-20">
 	<!-- Actions (Hidden in Print) -->
 	<div class="flex items-center justify-between print:hidden">
 		<a href="/installments" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all shadow-sm hover:shadow">
@@ -94,7 +95,7 @@
 		<div class="bg-white p-4 rounded-xl border border-blue-200 shadow-sm flex items-center justify-between ring-1 ring-blue-50 ring-offset-2">
 			<div>
 				<p class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] leading-none mb-1">Final Pending</p>
-				<p class="text-lg font-black text-blue-600 font-mono tracking-tighter">Rs. {Number(data.plan.remainingBalance).toLocaleString()}</p>
+				<p class="text-lg font-black text-blue-600 font-mono tracking-tighter">Rs. {totalPendingSum.toLocaleString()}</p>
 			</div>
 			<div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center border border-blue-100">
 				<AlertCircle class="w-5 h-5 text-blue-500" />
@@ -103,7 +104,7 @@
 	</div>
 
 	<!-- Printable Area -->
-	<div class="printable-area bg-white border border-gray-300 rounded-2xl shadow-xl overflow-hidden print:border-[3px] print:border-black print:rounded-none print:shadow-none print:m-0 mx-auto">
+	<div class="printable-area w-full max-w-full bg-white border border-gray-300 rounded-2xl shadow-xl overflow-hidden print:border-[3px] print:border-black print:rounded-none print:shadow-none print:m-0 mx-auto">
 		
 		<!-- Header -->
 		<div class="text-center pt-8 pb-4 border-b-2 border-gray-200 print:border-black print:pt-4 print:pb-2 bg-gradient-to-b from-gray-50 to-white print:bg-none">
@@ -112,45 +113,45 @@
 		</div>
 
 		<!-- Premium Customer Info Grid -->
-		<div class="grid grid-cols-1 md:grid-cols-3 print:grid-cols-3 bg-gray-50 print:bg-transparent border-b-2 border-gray-200 print:border-black divide-y md:divide-y-0 md:divide-x divide-gray-200 print:divide-x print:divide-black">
+		<div class="p-4 md:p-0 grid grid-cols-2 lg:grid-cols-3 print:grid-cols-3 gap-3 md:gap-0 bg-gray-50/50 md:bg-gray-50 print:bg-transparent border-b border-gray-200 md:border-b-2 print:border-black md:divide-y-0 md:divide-x divide-gray-200 print:divide-x print:divide-black">
 			
-			<div class="p-4 md:p-5 flex flex-col gap-1 print:p-2 print:border-b border-gray-200 print:border-black">
-				<span class="text-[10px] font-black text-blue-600 print:text-black uppercase tracking-widest leading-none">Customer Name</span>
-				<span class="font-bold text-gray-900 text-lg print:text-sm leading-tight print:leading-tight">{data.plan.customer.name}</span>
+			<div class="bg-white md:bg-transparent p-3 md:p-5 rounded-xl md:rounded-none border border-gray-100 md:border-0 shadow-sm md:shadow-none flex flex-col gap-1 print:p-2 print:border-b border-gray-200 print:border-black">
+				<span class="text-[9px] md:text-[10px] font-black text-blue-600 print:text-black uppercase tracking-widest leading-none">Customer</span>
+				<span class="font-bold text-gray-900 text-sm md:text-lg print:text-sm leading-tight print:leading-tight truncate">{data.plan.customer.name}</span>
 			</div>
 			
-			<div class="p-4 md:p-5 flex flex-col gap-1 print:p-2 print:border-b border-gray-200 print:border-black">
-				<span class="text-[10px] font-black text-blue-600 print:text-black uppercase tracking-widest leading-none">Home Address</span>
-				<span class="font-semibold text-gray-700 text-sm print:text-xs leading-tight print:leading-tight">{data.plan.customer.address}</span>
+			<div class="bg-white md:bg-transparent p-3 md:p-5 rounded-xl md:rounded-none border border-gray-100 md:border-0 shadow-sm md:shadow-none flex flex-col gap-1 print:p-2 print:border-b border-gray-200 print:border-black">
+				<span class="text-[9px] md:text-[10px] font-black text-blue-600 print:text-black uppercase tracking-widest leading-none">Mobile</span>
+				<span class="font-bold font-mono text-gray-900 text-xs md:text-base print:text-sm leading-tight print:leading-tight">{data.plan.customer.mobile}</span>
+			</div>
+
+			<div class="col-span-2 md:col-span-1 bg-white md:bg-transparent p-3 md:p-5 rounded-xl md:rounded-none border border-gray-100 md:border-0 shadow-sm md:shadow-none flex flex-col gap-1 print:p-2 print:border-b border-gray-200 print:border-black">
+				<span class="text-[9px] md:text-[10px] font-black text-blue-600 print:text-black uppercase tracking-widest leading-none">Home Address</span>
+				<span class="font-semibold text-gray-700 text-xs md:text-sm print:text-xs leading-tight print:leading-tight">{data.plan.customer.address}</span>
 			</div>
 			
-			<div class="p-4 md:p-5 flex flex-col gap-1 print:p-2 print:border-b border-gray-200 print:border-black">
-				<span class="text-[10px] font-black text-blue-600 print:text-black uppercase tracking-widest leading-none">Mobile #</span>
-				<span class="font-bold font-mono text-gray-900 text-base print:text-sm leading-tight print:leading-tight">{data.plan.customer.mobile}</span>
+			<div class="col-span-2 md:col-span-1 bg-white md:bg-transparent p-3 md:p-5 rounded-xl md:rounded-none border border-gray-100 md:border-0 shadow-sm md:shadow-none flex flex-col gap-1 md:border-t border-gray-200 print:border-t-0 print:border-black print:p-2">
+				<span class="text-[9px] md:text-[10px] font-black text-blue-600 print:text-black uppercase tracking-widest leading-none">Item Name</span>
+				<span class="font-bold text-gray-900 text-sm md:text-lg print:text-sm leading-tight print:leading-tight">{data.plan.product.name}</span>
 			</div>
 			
-			<div class="p-4 md:p-5 flex flex-col gap-1 border-t border-gray-200 print:border-t-0 print:border-black print:p-2">
-				<span class="text-[10px] font-black text-blue-600 print:text-black uppercase tracking-widest leading-none">Item Name</span>
-				<span class="font-bold text-gray-900 text-lg print:text-sm leading-tight print:leading-tight">{data.plan.product.name}</span>
+			<div class="bg-white md:bg-transparent p-3 md:p-5 rounded-xl md:rounded-none border border-gray-100 md:border-0 shadow-sm md:shadow-none flex flex-col gap-1 md:border-t border-gray-200 print:border-t-0 print:border-black print:p-2">
+				<span class="text-[9px] md:text-[10px] font-black text-blue-600 print:text-black uppercase tracking-widest leading-none">NIC #</span>
+				<span class="font-bold font-mono text-gray-700 text-xs md:text-base print:text-xs leading-tight print:leading-tight">{data.plan.customer.cnic}</span>
 			</div>
 			
-			<div class="p-4 md:p-5 flex flex-col gap-1 border-t border-gray-200 print:border-t-0 print:border-black print:p-2">
-				<span class="text-[10px] font-black text-blue-600 print:text-black uppercase tracking-widest leading-none">NIC #</span>
-				<span class="font-bold font-mono text-gray-700 text-base print:text-xs leading-tight print:leading-tight">{data.plan.customer.cnic}</span>
-			</div>
-			
-			<div class="p-4 md:p-5 flex flex-col gap-1 border-t border-gray-200 print:border-t-0 print:border-black print:p-2 bg-blue-50/50 print:bg-transparent">
-				<span class="text-[10px] font-black text-blue-600 print:text-black uppercase tracking-widest leading-none">Bill #</span>
-				<span class="font-black font-mono text-blue-700 text-lg print:text-sm print:text-black leading-tight print:leading-tight">#{data.plan.id.substring(0,6).toUpperCase()}</span>
+			<div class="bg-white md:bg-transparent p-3 md:p-5 rounded-xl md:rounded-none border border-gray-100 md:border-0 shadow-sm md:shadow-none flex flex-col gap-1 md:border-t border-gray-200 print:border-t-0 print:border-black print:p-2 md:bg-blue-50/50 print:bg-transparent">
+				<span class="text-[9px] md:text-[10px] font-black text-blue-600 print:text-black uppercase tracking-widest leading-none">Bill #</span>
+				<span class="font-black font-mono text-blue-700 text-sm md:text-lg print:text-sm print:text-black leading-tight print:leading-tight">#{data.plan.id.substring(0,6).toUpperCase()}</span>
 			</div>
 
 		</div>
 
-		<!-- Table Section with Strict Borders -->
-		<div class="overflow-x-auto print:overflow-visible">
-			<table class="w-full text-center text-sm lg:text-base whitespace-nowrap border-collapse">
+		<!-- Table Section — Desktop + Print Only -->
+		<div class="hidden md:block overflow-x-auto w-full print:block print:overflow-visible">
+			<table class="w-full text-center text-sm border-collapse min-w-[700px]">
 				<thead>
-					<tr class="bg-gray-100 print:bg-transparent text-gray-600 print:text-black font-black uppercase text-[10px] md:text-xs tracking-wider border-b-2 border-gray-300 print:border-b-2 print:border-black">
+					<tr class="bg-gray-100 print:bg-transparent text-gray-600 print:text-black font-black uppercase text-[10px] tracking-wider border-b-2 border-gray-300 print:border-b-2 print:border-black">
 						<th class="p-3 print:p-1.5 border-r border-gray-300 print:border-black w-12">Sr#</th>
 						<th class="p-3 print:p-1.5 border-r border-gray-300 print:border-black">Month</th>
 						<th class="p-3 print:p-1.5 border-r border-gray-300 print:border-black">Year</th>
@@ -162,6 +163,18 @@
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-gray-200 print:divide-black">
+					<!-- Advance Payment Row -->
+					{#if Number(data.plan.downPayment) > 0}
+					<tr class="bg-emerald-50/60 print:bg-transparent">
+						<td class="p-3 print:p-1.5 font-bold text-gray-500 print:text-black border-r border-gray-200 print:border-black print:text-xs">—</td>
+						<td colspan="2" class="p-3 print:p-1.5 font-black text-emerald-700 print:text-black border-r border-gray-200 print:border-black print:text-xs text-left uppercase tracking-widest text-[10px]">Advance / Down Payment</td>
+						<td class="p-3 print:p-1.5 text-right font-black font-mono text-gray-400 print:text-black border-r border-gray-200 print:border-black print:text-xs">—</td>
+						<td class="p-3 print:p-1.5 text-right font-black font-mono text-emerald-700 print:text-black border-r border-gray-200 print:border-black print:text-xs">{formatCurrency(data.plan.downPayment)}</td>
+						<td class="p-3 print:p-1.5 text-right font-black font-mono text-gray-400 print:text-black border-r border-gray-200 print:border-black print:text-xs">—</td>
+						<td class="p-3 print:p-1 border-r border-gray-200 print:border-black"><span class="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Paid at start</span></td>
+						<td class="p-3 print:p-1.5"></td>
+					</tr>
+					{/if}
 					{#each data.plan.installments as installment (installment.id)}
 						<tr class="hover:bg-blue-50/30 transition-colors group">
 							<td class="p-3 print:p-1.5 font-bold text-gray-900 print:text-black border-r border-gray-200 print:border-black print:text-xs">{installment.serialNumber}</td>
@@ -177,17 +190,15 @@
 							
 							<td class="p-3 print:p-1 border-r border-gray-200 print:border-black relative">
 								{#if installment.status !== 'PAID'}
-									<!-- Inline Date Picker & Pay Button for Web View -->
 									<div class="print:hidden flex items-center justify-between gap-2 max-w-[240px] mx-auto">
-										<div class="relative flex-1 group-hover:ring-2 ring-blue-100 rounded-lg transition-all">
+										<div class="relative flex-1">
 											<div class="absolute inset-y-0 left-2 flex items-center pointer-events-none">
 												<CalendarDays class="w-3.5 h-3.5 text-gray-400" />
 											</div>
 											<input 
 												type="date" 
 												bind:value={rowDates[installment.id]} 
-												class="w-full pl-7 pr-2 py-2.5 bg-white border-2 border-gray-200 rounded-lg text-xs font-bold text-gray-700 outline-none focus:border-black focus:ring-0 transition-all cursor-pointer shadow-sm disabled:opacity-50"
-												title="Change payment date before paying"
+												class="w-full pl-7 pr-2 py-2.5 bg-white border-2 border-gray-200 rounded-lg text-xs font-bold text-gray-700 outline-none focus:border-black focus:ring-0 transition-all cursor-pointer shadow-sm"
 											/>
 										</div>
 										<button 
@@ -196,7 +207,7 @@
 												paymentAmount = parseFloat(installment.pendingAmount);
 												paymentDateStr = rowDates[installment.id];
 											}}
-											class="px-5 py-2.5 bg-black text-white rounded-lg text-sm font-black shadow-[0_4px_14px_0_rgba(0,0,0,0.2)] hover:bg-gray-800 hover:shadow-[0_6px_20px_rgba(0,0,0,0.23)] active:scale-95 transition-all uppercase tracking-widest whitespace-nowrap"
+											class="px-5 py-2.5 bg-black text-white rounded-lg text-sm font-black shadow-md hover:bg-gray-800 active:scale-95 transition-all uppercase tracking-widest whitespace-nowrap"
 										>
 											PAY
 										</button>
@@ -204,17 +215,16 @@
 									<span class="hidden print:inline font-mono text-xs">{formatDateShort(installment.dueDate)}</span>
 								{:else}
 									<div class="flex items-center justify-center">
-										<div class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-100 shadow-sm group-hover:scale-105 transition-transform">
+										<div class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-100">
 											<div class="flex items-center gap-1.5">
 												<Banknote class="w-3.5 h-3.5 text-emerald-600" />
-												<span class="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Paisa Paid</span>
+												<span class="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Paid</span>
 											</div>
 											<span class="text-[9px] font-bold text-emerald-600/70 font-mono">{formatDateShort(installment.paymentDate)}</span>
 										</div>
 									</div>
 								{/if}
 							</td>
-							
 							<td class="p-3 print:p-1.5"></td>
 						</tr>
 					{/each}
@@ -230,6 +240,106 @@
 					</tr>
 				</tfoot>
 			</table>
+		</div>
+
+		<!-- Mobile Card View — hidden on desktop + print -->
+		<div class="md:hidden print:hidden divide-y divide-gray-100">
+			{#if Number(data.plan.downPayment) > 0}
+				<div class="p-4 bg-emerald-50/60">
+					<div class="flex items-center justify-between">
+						<div>
+							<p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Advance / Down Payment</p>
+							<p class="text-lg font-black text-emerald-700 font-mono mt-0.5">Rs. {formatCurrency(data.plan.downPayment)}</p>
+						</div>
+						<span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-widest rounded-lg border border-emerald-200">Paid at start</span>
+					</div>
+				</div>
+			{/if}
+
+			{#each data.plan.installments as installment (installment.id)}
+				<div class="p-4 {installment.status === 'PAID' ? 'bg-emerald-50/30' : 'bg-white'} hover:bg-gray-50/50 transition-colors">
+					<!-- Top row: serial + month/year + status badge -->
+					<div class="flex items-center justify-between mb-3">
+						<div class="flex items-center gap-2">
+							<span class="w-7 h-7 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-[10px] font-black text-gray-500">{installment.serialNumber}</span>
+							<div>
+								<p class="text-sm font-black text-gray-900">{getMonthName(installment.dueDate)} {getYear(installment.dueDate)}</p>
+								<p class="text-[9px] font-bold text-gray-400">Due: {formatDateShort(installment.dueDate)}</p>
+							</div>
+						</div>
+						{#if installment.status === 'PAID'}
+							<div class="flex flex-col items-end gap-0.5">
+								<span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-widest rounded-lg border border-emerald-200 flex items-center gap-1">
+									<Banknote class="w-3 h-3" /> Paid
+								</span>
+								<span class="text-[9px] text-emerald-600/70 font-mono">{formatDateShort(installment.paymentDate)}</span>
+							</div>
+						{:else}
+							<span class="px-2 py-1 bg-orange-50 text-orange-700 text-[9px] font-black uppercase tracking-widest rounded-lg border border-orange-200">Unpaid</span>
+						{/if}
+					</div>
+
+					<!-- Amounts row -->
+					<div class="grid grid-cols-3 gap-2 bg-gray-50 rounded-xl p-3 border border-gray-100 mb-3">
+						<div class="text-center">
+							<p class="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Amount</p>
+							<p class="text-sm font-black text-gray-900 font-mono">{formatCurrency(installment.amount)}</p>
+						</div>
+						<div class="text-center border-x border-gray-200">
+							<p class="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-1">Received</p>
+							<p class="text-sm font-black text-emerald-600 font-mono">{installment.receivedAmount > 0 ? formatCurrency(installment.receivedAmount) : '—'}</p>
+						</div>
+						<div class="text-center">
+							<p class="text-[8px] font-black text-red-400 uppercase tracking-widest mb-1">Pending</p>
+							<p class="text-sm font-black {installment.pendingAmount > 0 ? 'text-red-500' : 'text-gray-400'} font-mono">{installment.pendingAmount > 0 ? formatCurrency(installment.pendingAmount) : '—'}</p>
+						</div>
+					</div>
+
+					<!-- Payment action row (only for unpaid) -->
+					{#if installment.status !== 'PAID'}
+						<div class="flex items-center gap-2 mt-2">
+							<div class="relative flex-1">
+								<div class="absolute inset-y-0 left-2.5 flex items-center pointer-events-none">
+									<CalendarDays class="w-3.5 h-3.5 text-gray-400" />
+								</div>
+								<input 
+									type="date" 
+									bind:value={rowDates[installment.id]} 
+									class="w-full pl-8 pr-2 py-2.5 bg-white border-2 border-gray-200 rounded-xl text-xs font-bold text-gray-700 outline-none focus:border-black transition-all shadow-sm"
+								/>
+							</div>
+							<button 
+								onclick={() => {
+									selectedInstallment = installment;
+									paymentAmount = parseFloat(installment.pendingAmount);
+									paymentDateStr = rowDates[installment.id];
+								}}
+								class="px-6 py-2.5 bg-black text-white rounded-xl text-sm font-black shadow-md hover:bg-gray-800 active:scale-95 transition-all uppercase tracking-widest whitespace-nowrap"
+							>
+								PAY
+							</button>
+						</div>
+					{/if}
+				</div>
+			{/each}
+
+			<!-- Mobile Total Summary -->
+			<div class="p-4 bg-gray-100 border-t-2 border-gray-300">
+				<div class="grid grid-cols-3 gap-2">
+					<div class="text-center">
+						<p class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1">Total</p>
+						<p class="text-sm font-black text-gray-900 font-mono">{formatCurrency(totalInstallmentSum)}</p>
+					</div>
+					<div class="text-center border-x border-gray-300">
+						<p class="text-[8px] font-black text-emerald-600 uppercase tracking-widest mb-1">Received</p>
+						<p class="text-sm font-black text-emerald-600 font-mono">{formatCurrency(totalReceivedSum)}</p>
+					</div>
+					<div class="text-center">
+						<p class="text-[8px] font-black text-red-500 uppercase tracking-widest mb-1">Pending</p>
+						<p class="text-sm font-black text-red-600 font-mono">{formatCurrency(totalPendingSum)}</p>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
@@ -256,11 +366,14 @@
 				method="POST" 
 				action="?/recordPayment" 
 				use:enhance={() => {
-					return async ({ result }) => {
+					submitting = true;
+					return async ({ result, update }) => {
+						submitting = false;
 						if (result.type === 'success') {
 							selectedInstallment = null;
+							await update();
 						} else if (result.type === 'failure' || result.type === 'error') {
-							const errorMsg = result.data?.error || (result.type === 'error' ? 'A server error occurred' : 'Failed to record payment');
+							const errorMsg = result.type === 'failure' ? (result.data?.error || 'Failed to record payment') : 'A server error occurred';
 							alert(errorMsg);
 						}
 					};
@@ -328,9 +441,15 @@
 				<div class="pt-2">
 					<button 
 						type="submit"
-						class="w-full py-4 rounded-xl bg-black text-white font-black uppercase tracking-widest shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] hover:bg-gray-900 active:scale-95 transition-all text-sm flex items-center justify-center gap-2"
+						disabled={submitting}
+						class="w-full py-4 rounded-xl bg-black text-white font-black uppercase tracking-widest shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] hover:bg-gray-900 active:scale-95 transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
 					>
-						<CheckCircle2 class="w-5 h-5" /> Confirm Payment
+						{#if submitting}
+							<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+							Processing...
+						{:else}
+							<CheckCircle2 class="w-5 h-5" /> Confirm Payment
+						{/if}
 					</button>
 				</div>
 			</form>

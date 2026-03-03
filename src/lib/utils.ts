@@ -33,3 +33,23 @@ export function serializeDecimals(obj: any): any {
 
     return obj;
 }
+
+/**
+ * Returns the current date/time in Pakistan (UTC+5).
+ * Essential for server-side logic since servers often run in UTC.
+ */
+export function getPKDate(): Date {
+    const now = new Date();
+    // PK is UTC+5
+    return new Date(now.getTime() + (5 * 60 * 60 * 1000));
+}
+
+/**
+ * Returns a Date object representing the start of the day in PK (00:00:00).
+ */
+export function getPKStartOfDay(date?: Date | string): Date {
+    const d = date ? new Date(date) : getPKDate();
+    d.setUTCHours(0, 0, 0, 0);
+    return d;
+}
+

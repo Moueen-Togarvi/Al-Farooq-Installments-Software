@@ -1,6 +1,11 @@
 import { prisma } from '$lib/server/prisma';
 import type { Handle } from '@sveltejs/kit';
 
+// Simple in-memory session cache to avoid DB roundtrips on every request
+// Extremely important for apps with high latency to the database (e.g. PK to US-East)
+const sessionCache = new Map<string, { user: any, expires: number }>();
+const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
+
 export const handle: Handle = async ({ event, resolve }) => {
     try {
         const sessionId = event.cookies.get('session');
@@ -8,22 +13,32 @@ export const handle: Handle = async ({ event, resolve }) => {
         if (!sessionId) {
             event.locals.user = null;
         } else {
-            try {
-                const user = await prisma.user.findUnique({
-                    where: { id: sessionId },
-                    select: { id: true, email: true, name: true, role: true }
-                });
+            const now = Date.now();
+            const cached = sessionCache.get(sessionId);
 
-                if (user) {
-                    event.locals.user = user;
-                } else {
+            if (cached && cached.expires > now) {
+                event.locals.user = cached.user;
+            } else {
+                try {
+                    const user = await prisma.user.findUnique({
+                        where: { id: sessionId },
+                        select: { id: true, email: true, name: true, role: true }
+                    });
+
+                    if (user) {
+                        event.locals.user = user;
+                        // Save to cache
+                        sessionCache.set(sessionId, { user, expires: now + CACHE_TTL });
+                    } else {
+                        event.locals.user = null;
+                        event.cookies.delete('session', { path: '/' });
+                        sessionCache.delete(sessionId);
+                    }
+                } catch (dbErr) {
+                    console.error('DATABASE CONNECTIVITY ERROR IN HOOKS:', dbErr);
+                    // If DB is down, we can't verify session, treat as null user
                     event.locals.user = null;
-                    event.cookies.delete('session', { path: '/' });
                 }
-            } catch (dbErr) {
-                console.error('DATABASE CONNECTIVITY ERROR IN HOOKS:', dbErr);
-                // If DB is down, we can't verify session, treat as null user
-                event.locals.user = null;
             }
         }
 

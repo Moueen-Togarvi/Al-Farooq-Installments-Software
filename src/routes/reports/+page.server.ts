@@ -1,17 +1,17 @@
 import { prisma } from '$lib/server/prisma';
-import { serializeDecimals } from '$lib/utils';
+import { serializeDecimals, getPKDate, getPKStartOfDay } from '$lib/utils';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url }: { url: URL }) => {
     const type = url.searchParams.get('type') || 'daily';
-    const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
+    const date = url.searchParams.get('date') || getPKDate().toISOString().split('T')[0];
 
     let reportData = [];
     let summary = { total: 0, count: 0 };
 
-    const selectedDate = new Date(date);
-    const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999));
+    const startOfDay = getPKStartOfDay(date);
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setUTCHours(23, 59, 59, 999);
 
     if (type === 'daily') {
         reportData = await prisma.payment.findMany({
@@ -21,13 +21,17 @@ export const load: PageServerLoad = async ({ url }: { url: URL }) => {
                     lte: endOfDay
                 }
             },
-            include: {
+            select: {
+                id: true,
+                amount: true,
+                method: true,
+                createdAt: true,
                 installment: {
-                    include: {
+                    select: {
                         plan: {
-                            include: {
-                                customer: true,
-                                product: true
+                            select: {
+                                customer: { select: { name: true } },
+                                product: { select: { name: true } }
                             }
                         }
                     }
@@ -47,11 +51,15 @@ export const load: PageServerLoad = async ({ url }: { url: URL }) => {
                 dueDate: { lt: today },
                 status: { not: 'PAID' }
             },
-            include: {
+            select: {
+                id: true,
+                dueDate: true,
+                pendingAmount: true,
                 plan: {
-                    include: {
-                        customer: true,
-                        product: true
+                    select: {
+                        id: true,
+                        customer: { select: { name: true } },
+                        product: { select: { name: true } }
                     }
                 }
             },

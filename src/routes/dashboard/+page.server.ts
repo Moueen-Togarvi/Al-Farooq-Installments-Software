@@ -1,20 +1,20 @@
 import { prisma } from '$lib/server/prisma';
-import { serializeDecimals } from '$lib/utils';
+import { serializeDecimals, getPKStartOfDay } from '$lib/utils';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
     try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const today = getPKStartOfDay();
         const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
+        tomorrow.setUTCDate(today.getUTCDate() + 1);
 
         const [
             totalCustomers,
             activePlans,
             totalBalanceResult,
             todayDue,
-            totalPaymentsResult
+            totalPaymentsResult,
+            overdueInstallments
         ] = await Promise.all([
             prisma.customer.count(),
             prisma.installmentPlan.count({ where: { status: 'ACTIVE' } }),
@@ -23,53 +23,47 @@ export const load: PageServerLoad = async () => {
             }),
             prisma.installment.findMany({
                 where: {
-                    dueDate: {
-                        gte: today,
-                        lt: tomorrow
-                    }
+                    dueDate: { gte: today, lt: tomorrow }
                 },
-                include: {
+                select: {
+                    id: true, amount: true, status: true, dueDate: true,
                     plan: {
-                        include: {
-                            customer: true,
-                            product: true
+                        select: {
+                            id: true,
+                            customer: { select: { name: true } },
+                            product: { select: { name: true } }
                         }
                     }
                 }
             }),
             prisma.payment.aggregate({
                 _sum: { amount: true }
+            }),
+            prisma.installment.findMany({
+                where: {
+                    dueDate: { lt: today },
+                    status: { not: 'PAID' }
+                },
+                select: {
+                    id: true, pendingAmount: true, dueDate: true,
+                    plan: {
+                        select: {
+                            id: true,
+                            customer: { select: { name: true } },
+                            product: { select: { name: true } }
+                        }
+                    }
+                },
+                take: 5,
+                orderBy: { dueDate: 'asc' }
             })
         ]);
 
         const totalPending = totalBalanceResult._sum?.remainingBalance || 0;
         const totalReceived = totalPaymentsResult._sum?.amount || 0;
 
-        // Fetch some overdue customers (simplified: due date in the past and not paid)
-        const overdueInstallments = await prisma.installment.findMany({
-            where: {
-                dueDate: { lt: today },
-                status: { not: 'PAID' }
-            },
-            include: {
-                plan: {
-                    include: {
-                        customer: true,
-                        product: true
-                    }
-                }
-            },
-            take: 5,
-            orderBy: { dueDate: 'asc' }
-        });
-
         return serializeDecimals({
-            stats: {
-                totalCustomers,
-                activePlans,
-                totalReceived,
-                totalPending
-            },
+            stats: { totalCustomers, activePlans, totalReceived, totalPending },
             todayDue,
             overdueInstallments
         });

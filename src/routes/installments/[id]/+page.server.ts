@@ -1,5 +1,5 @@
 import { prisma } from '$lib/server/prisma';
-import { fail } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import { serializeDecimals } from '$lib/utils';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -11,22 +11,21 @@ export const load: PageServerLoad = async ({ params }) => {
                 customer: true,
                 product: true,
                 installments: {
-                    orderBy: { serialNumber: 'asc' },
-                    include: {
-                        payments: true
-                    }
+                    orderBy: { serialNumber: 'asc' }
+                    // Removed payments: true — huge performance win
                 }
             }
         });
 
         if (!plan) {
-            return fail(404, { error: 'Plan not found' } as any);
+            error(404, { message: 'Plan not found' });
         }
 
         return { plan: serializeDecimals(plan) };
     } catch (err: any) {
+        if (err.status) throw err; // Re-throw SvelteKit errors
         console.error('DATABASE ERROR IN LEDGER LOAD:', err);
-        return fail(500, { error: 'Database is currently unreachable. Please try again in a moment.' } as any);
+        error(500, { message: 'Database is currently unreachable.' });
     }
 };
 
@@ -47,69 +46,74 @@ export const actions: Actions = {
             await prisma.$transaction(async (tx: any) => {
                 const installment = await tx.installment.findUnique({
                     where: { id: installmentId },
-                    include: { plan: true }
+                    select: {
+                        id: true,
+                        planId: true,
+                        amount: true,
+                        receivedAmount: true,
+                        status: true,
+                        paymentDate: true
+                    }
                 });
 
                 if (!installment) throw new Error('Installment not found');
 
-                // Record payment
-                const payment = await tx.payment.create({
-                    data: {
-                        installmentId,
-                        amount,
-                        method,
-                        paymentDate: paymentDateObj
-                    }
-                });
-
-                console.log(`Payment recorded: ${payment.id} for installment ${installmentId}`);
-
-                // Update installment with robust decimal handling
                 const currentReceived = parseFloat(installment.receivedAmount.toString());
                 const totalDue = parseFloat(installment.amount.toString());
                 const newReceived = currentReceived + amount;
 
                 let status: 'PAID' | 'PARTIAL' | 'UNPAID' = 'PARTIAL';
-                if (newReceived >= totalDue - 0.01) { // Floating point safety
+                if (newReceived >= totalDue - 0.01) {
                     status = 'PAID';
                 } else if (newReceived <= 0) {
                     status = 'UNPAID';
                 }
 
-                await tx.installment.update({
-                    where: { id: installmentId },
-                    data: {
-                        receivedAmount: newReceived,
-                        pendingAmount: Math.max(0, totalDue - newReceived),
-                        status,
-                        paymentDate: status === 'PAID' ? paymentDateObj : installment.paymentDate
-                    }
-                });
-
-                // Update plan balance
-                await tx.installmentPlan.update({
-                    where: { id: installment.planId },
-                    data: {
-                        remainingBalance: {
-                            decrement: amount
+                // Batch updates
+                await Promise.all([
+                    tx.payment.create({
+                        data: {
+                            installmentId,
+                            amount,
+                            method,
+                            paymentDate: paymentDateObj
                         }
-                    }
-                });
-
-                // Check if all installments are paid to close the plan
-                const remainingIncomplete = await tx.installment.count({
-                    where: {
-                        planId: installment.planId,
-                        status: { not: 'PAID' }
-                    }
-                });
-
-                if (remainingIncomplete === 0) {
-                    await tx.installmentPlan.update({
+                    }),
+                    tx.installment.update({
+                        where: { id: installmentId },
+                        data: {
+                            receivedAmount: newReceived,
+                            pendingAmount: Math.max(0, totalDue - newReceived),
+                            status,
+                            paymentDate: status === 'PAID' ? paymentDateObj : installment.paymentDate
+                        }
+                    }),
+                    tx.installmentPlan.update({
                         where: { id: installment.planId },
-                        data: { status: 'CLOSED' }
+                        data: {
+                            remainingBalance: {
+                                decrement: amount
+                            }
+                        }
+                    })
+                ]);
+
+                // Efficiently check if we should close the plan
+                // Only check if current installment just became PAID
+                if (status === 'PAID') {
+                    const remainingIncomplete = await tx.installment.count({
+                        where: {
+                            planId: installment.planId,
+                            status: { not: 'PAID' }
+                        }
                     });
-                    console.log(`Plan ${installment.planId} closed.`);
+
+                    if (remainingIncomplete === 0) {
+                        await tx.installmentPlan.update({
+                            where: { id: installment.planId },
+                            data: { status: 'CLOSED' }
+                        });
+                    }
                 }
             });
         } catch (err: any) {

@@ -151,6 +151,7 @@
 				{#each navigation as item} <!-- Show all items -->
 					<a
 						href={item.href}
+						data-sveltekit-preload-data="tap"
 						class="flex flex-col items-center justify-center w-full gap-1 p-1.5 rounded-xl transition-all {page.url.pathname.startsWith(item.href) ? 'text-gray-900 scale-105' : 'text-gray-400 hover:text-gray-600'}"
 					>
 						<div class="relative p-1">

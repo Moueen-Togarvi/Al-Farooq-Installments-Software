@@ -6,13 +6,22 @@ export const load: PageServerLoad = async () => {
     const payments = await prisma.payment.findMany({
         orderBy: { paymentDate: 'desc' },
         take: 200,
-        include: {
+        select: {
+            id: true,
+            amount: true,
+            method: true,
+            paymentDate: true,
             installment: {
-                include: {
+                select: {
+                    month: true,
+                    year: true,
+                    serialNumber: true,
+                    planId: true,
                     plan: {
-                        include: {
-                            customer: true,
-                            product: true
+                        select: {
+                            id: true,
+                            customer: { select: { name: true } },
+                            product: { select: { name: true } }
                         }
                     }
                 }

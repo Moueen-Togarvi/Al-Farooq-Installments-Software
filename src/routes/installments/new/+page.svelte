@@ -17,16 +17,39 @@
 
 	let selectedCustomerId = $state('');
 	let selectedProductId = $state('');
+	let customerSearchQuery = $state('');
+	let showCustomerDropdown = $state(false);
+	
 	let startDate = $state(new Date().toISOString().split('T')[0]);
-	let customDuration = $state(0);
-	let customDownPayment = $state(0);
+	let customDuration = $state<number | null>(null);
+	let customDownPayment = $state<number | null>(null);
+	let customTotalAmount = $state<number | null>(null);
 
 	const selectedProduct = $derived(data.products.find((p: any) => p.id === selectedProductId));
 	const selectedCustomer = $derived(data.customers.find((c: any) => c.id === selectedCustomerId));
+	
+	const filteredCustomers = $derived(
+		customerSearchQuery 
+			? data.customers.filter((c: any) => 
+				c.name.toLowerCase().includes(customerSearchQuery.toLowerCase()) || 
+				c.cnic.includes(customerSearchQuery) ||
+				c.mobile.includes(customerSearchQuery)
+			  )
+			: data.customers
+	);
 
-	const duration = $derived(customDuration || (selectedProduct?.durationMonths ?? 12));
-	const totalAmount = $derived(selectedProduct ? parseFloat(selectedProduct.installmentPrice) : 0);
-	const downPayment = $derived(customDownPayment || (selectedProduct ? parseFloat(selectedProduct.downPayment) : 0));
+	const duration = $derived(customDuration ?? ((selectedProduct?.durationMonths && selectedProduct.durationMonths > 1) ? selectedProduct.durationMonths : 12));
+	
+	const defaultTotal = $derived(
+		selectedProduct 
+			? (Number(selectedProduct.installmentPrice) > 0 
+				? Number(selectedProduct.installmentPrice) 
+				: Number(selectedProduct.cashPrice || 0)) 
+			: 0
+	);
+	
+	const totalAmount = $derived(customTotalAmount ?? defaultTotal);
+	const downPayment = $derived(customDownPayment ?? 0);
 	const remainingBalance = $derived(totalAmount - downPayment);
 	const monthlyAmount = $derived(duration > 0 ? remainingBalance / duration : 0);
 
@@ -35,7 +58,7 @@
 
 	$effect(() => {
 		// Only auto-generate if the user hasn't started manually overriding amounts/dates
-		if (selectedProduct && startDate && !manuallyEdited) {
+		if (selectedProduct && startDate && totalAmount > 0 && !manuallyEdited) {
 			let newSchedule = [];
 			const start = new Date(startDate);
 			const limit = Math.min(duration, 36);
@@ -89,20 +112,44 @@
 					<span class="text-sm font-semibold">Step 1: Select Customer</span>
 				</div>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
-					<div class="space-y-2">
-						<label for="customerId" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Choose Customer</label>
-						<select 
-							name="customerId" 
-							id="customerId" 
-							bind:value={selectedCustomerId}
-							required 
-							class="w-full px-3 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm appearance-none cursor-pointer"
-						>
-							<option value="">Select a customer...</option>
-							{#each data.customers as customer}
-								<option value={customer.id}>{customer.name} - {customer.cnic}</option>
-							{/each}
-						</select>
+					<div class="space-y-2 relative">
+						<label for="customerSearch" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Search Customer</label>
+						<!-- Hidden input for actual form submission -->
+						<input type="hidden" name="customerId" bind:value={selectedCustomerId} required />
+						
+						<input 
+							type="text"
+							id="customerSearch"
+							placeholder="Search by name, CNIC or mobile..."
+							bind:value={customerSearchQuery}
+							onfocus={() => showCustomerDropdown = true}
+							onblur={() => setTimeout(() => showCustomerDropdown = false, 200)}
+							class="w-full px-3 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold placeholder-gray-400"
+						/>
+						
+						{#if showCustomerDropdown && filteredCustomers.length > 0}
+							<div class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+								{#each filteredCustomers as customer}
+									<button 
+										type="button"
+										class="w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 focus:bg-gray-50 outline-none transition-colors last:border-0"
+										onclick={() => {
+											selectedCustomerId = customer.id;
+											customerSearchQuery = `${customer.name} - ${customer.cnic}`;
+											showCustomerDropdown = false;
+										}}
+									>
+										<p class="text-sm font-black text-gray-900 truncate">{customer.name}</p>
+										<p class="text-[10px] text-gray-500 font-bold truncate mt-0.5">{customer.cnic} • {customer.mobile}</p>
+									</button>
+								{/each}
+							</div>
+						{/if}
+						{#if showCustomerDropdown && filteredCustomers.length === 0}
+							<div class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl p-4 text-center">
+								<p class="text-xs font-bold text-gray-500">No customers found</p>
+							</div>
+						{/if}
 					</div>
 					{#if selectedCustomer}
 						<div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex items-center gap-3 animate-in fade-in slide-in-from-left-4 shadow-sm">
@@ -142,14 +189,21 @@
 						</select>
 					</div>
 					{#if selectedProduct}
+						<!-- Hidden input carries totalAmount to the server -->
+						<input type="hidden" name="totalAmount" value={totalAmount} />
 						<div class="grid grid-cols-2 gap-3 w-full animate-in fade-in slide-in-from-left-4">
-							<div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center">
-								<p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Installment Price</p>
-								<p class="text-sm font-black text-gray-900">{formatCurrency(selectedProduct.installmentPrice)}</p>
+							<div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center">
+								<p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Installment Price</p>
+								<p class="text-xl font-black text-gray-900 tracking-tight">{formatCurrency(totalAmount)}</p>
+								<p class="text-[9px] font-bold text-gray-400 mt-2 flex items-center gap-1">
+									<span class="w-1.5 h-1.5 rounded-full bg-gray-300 inline-block"></span>
+									From product price
+								</p>
 							</div>
-							<div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100 shadow-sm flex flex-col justify-center">
-								<p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">Calculated Profit</p>
-								<p class="text-sm font-black text-emerald-700">{formatCurrency(selectedProduct.profit)}</p>
+							<div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 shadow-sm flex flex-col justify-center">
+								<p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-2">Calculated Profit</p>
+								<p class="text-xl font-black text-emerald-700">{formatCurrency(totalAmount - parseFloat(selectedProduct.cashPrice || '0'))}</p>
+								<p class="text-[9px] font-bold text-emerald-600/60 mt-2">Over sale price</p>
 							</div>
 						</div>
 					{/if}
@@ -175,17 +229,6 @@
 						/>
 					</div>
 					<div class="space-y-2">
-						<label for="durationMonths" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Duration (Months)</label>
-						<input 
-							type="number" 
-							name="durationMonths" 
-							id="durationMonths" 
-							bind:value={customDuration}
-							placeholder={selectedProduct?.durationMonths?.toString() ?? "12"}
-							class="w-full px-3 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" 
-						/>
-					</div>
-					<div class="space-y-2">
 						<label for="downPayment" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Advance Payment</label>
 						<input 
 							type="number" 
@@ -196,54 +239,73 @@
 							class="w-full px-3 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" 
 						/>
 					</div>
+					<div class="space-y-2">
+						<label for="durationMonths" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Duration (Months)</label>
+						<input 
+							type="number" 
+							name="durationMonths" 
+							id="durationMonths" 
+							bind:value={customDuration}
+							placeholder={(selectedProduct?.durationMonths && selectedProduct.durationMonths > 1) ? selectedProduct.durationMonths.toString() : "12"}
+							class="w-full px-3 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" 
+						/>
+					</div>
 				</div>
 			</div>
 		</div>
 
 		<!-- Right: Summary & Preview -->
 		<div class="space-y-6">
-			<div class="bg-gray-900 rounded-xl p-6 text-white shadow-xl sticky top-28">
-				<h3 class="text-xs font-black mb-5 border-b border-gray-700/50 pb-3 uppercase tracking-widest">Sale Summary</h3>
+			<div class="bg-[#0b1120] rounded-[24px] p-8 text-white shadow-2xl sticky top-6 ring-1 ring-white/10">
+				<h3 class="text-[10px] font-black mb-8 border-b border-white/10 pb-4 uppercase tracking-[0.3em] text-white/50">Sale Summary</h3>
 				
-				<div class="space-y-4">
-					<div class="flex justify-between items-center bg-gray-800 p-3 rounded-lg border border-gray-700 shadow-inner">
-						<span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Installment Total</span>
-						<span class="text-sm font-black">{formatCurrency(totalAmount)}</span>
+				<div class="space-y-6">
+					<div class="flex justify-between items-center group">
+						<span class="text-[10px] font-black text-white/40 uppercase tracking-widest transition-colors group-hover:text-white/60">Installment Total</span>
+						<span class="text-base font-black tracking-tight">{formatCurrency(totalAmount)}</span>
 					</div>
-					<div class="flex justify-between items-center px-2 py-1">
-						<span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Advance Payment</span>
-						<span class="text-xs font-black text-red-400">-{formatCurrency(downPayment)}</span>
+					<div class="flex justify-between items-center group">
+						<span class="text-[10px] font-black text-white/40 uppercase tracking-widest transition-colors group-hover:text-white/60">Advance Payment</span>
+						<span class="text-sm font-black text-[#ff5a5a] tracking-tight">-{formatCurrency(downPayment)}</span>
 					</div>
-					<div class="flex justify-between items-center border-t border-gray-700/50 pt-4 px-2">
-						<span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Balance to Pay</span>
-						<span class="text-lg font-black text-white">{formatCurrency(remainingBalance)}</span>
+					<div class="flex justify-between items-center border-t border-white/10 pt-6">
+						<span class="text-[10px] font-black text-white/50 uppercase tracking-widest">Balance to Pay</span>
+						<span class="text-xl font-black text-white tracking-tight">{formatCurrency(remainingBalance)}</span>
 					</div>
-					<div class="bg-gradient-to-br from-gray-800 to-gray-900 p-5 rounded-xl border border-gray-700 mt-6 text-center shadow-inner">
-						<p class="text-[9px] font-black uppercase tracking-[0.2em] text-blue-400 mb-1.5">Monthly Installment</p>
-						<p class="text-xl font-black text-white">{formatCurrency(monthlyAmount)}</p>
-						<p class="text-[9px] font-bold text-gray-500 mt-2 uppercase tracking-widest">For {duration} months</p>
+					
+					<div class="relative overflow-hidden bg-gradient-to-br from-[#131b2f] to-[#0d1425] p-6 rounded-2xl border border-white/5 mt-8 text-center shadow-inner">
+						<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 opacity-50"></div>
+						<p class="text-[8px] font-black uppercase tracking-[0.3em] text-[#60a5fa] mb-3">Est. Monthly Installment</p>
+						<p class="text-3xl font-black text-white tracking-tighter drop-shadow-sm">{formatCurrency(monthlyAmount)}</p>
+						<div class="mt-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/5">
+							<Clock class="w-3 h-3 text-white/40" />
+							<p class="text-[9px] font-bold text-white/40 uppercase tracking-widest">{duration} months plan</p>
+						</div>
 					</div>
 				</div>
 
 				<button 
 					type="submit"
-					class="w-full mt-8 py-3.5 bg-white text-black font-black uppercase tracking-widest rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:bg-gray-100 active:scale-95 transition-all text-[10px] flex items-center justify-center gap-2"
+					class="w-full mt-10 py-4 bg-white text-black font-black uppercase tracking-[0.2em] rounded-xl shadow-[0_8px_30px_rgb(255,255,255,0.1)] hover:bg-gray-100 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-[10px] flex items-center justify-center gap-2"
 				>
-					<CheckCircle2 class="w-4 h-4" /> Finalize Sale
+					<CheckCircle2 class="w-4 h-4" /> Finalize Sale Contract
 				</button>
 			</div>
 
-			<!-- Custom Schedule JSON -->
-			<input type="hidden" name="customSchedule" value={JSON.stringify(customSchedule)} />
-
-			<!-- Schedule Editor -->
+			<!-- Schedule Preview Box -->
 			{#if customSchedule.length > 0}
-				<div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
-					<div class="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
-						<h3 class="text-[10px] font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
-							<Calendar class="w-3.5 h-3.5 text-gray-500" />
-							Schedule ({customSchedule.length}m)
-						</h3>
+				<div class="bg-white rounded-[24px] p-6 shadow-xl border border-gray-100 mt-6 relative overflow-hidden">
+					<div class="absolute top-0 left-0 w-full h-1 bg-gray-100"></div>
+					<div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-100/60">
+						<div class="flex items-center gap-3">
+							<h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+								<Calendar class="w-3.5 h-3.5" />
+								Payment Schedule
+							</h3>
+							<span class="px-2.5 py-1 bg-gray-50 text-gray-500 rounded-lg text-[9px] font-black uppercase tracking-widest border border-gray-200/60">
+								{customSchedule.length} Months
+							</span>
+						</div>
 						{#if manuallyEdited}
 							<button 
 								type="button" 
@@ -255,26 +317,28 @@
 						{/if}
 					</div>
 					
-					<div class="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
+					<div class="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
 						{#each customSchedule as item, i}
-							<div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border {manuallyEdited ? 'border-amber-200 bg-amber-50/30' : 'border-gray-200'} transition-colors shadow-sm">
-								<div class="w-7 h-7 bg-white border border-gray-200 rounded flex items-center justify-center font-black text-gray-400 shrink-0 text-[10px] shadow-sm">
+							<div class="flex items-center gap-3 p-3 bg-gray-50/50 hover:bg-gray-50 rounded-xl border {manuallyEdited && customSchedule[i].amount !== Math.round(monthlyAmount) ? 'border-amber-200 bg-amber-50/20' : 'border-gray-200/60'} transition-colors">
+								<div class="w-8 h-8 bg-white border border-gray-200/80 rounded-lg flex items-center justify-center font-black text-gray-400 shrink-0 text-[10px] shadow-sm">
 									{item.serial}
 								</div>
 								<div class="flex-1">
+									<p class="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1">Due Date</p>
 									<input 
 										type="date" 
 										bind:value={customSchedule[i].date}
 										oninput={handleManualEdit}
-										class="w-full bg-white border border-gray-300 rounded text-[10px] font-bold text-gray-700 outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 p-1.5 transition-all"
+										class="w-full bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-2 transition-all shadow-sm"
 									/>
 								</div>
 								<div class="flex-1">
+									<p class="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1 ml-1 text-right">Amount (Rs)</p>
 									<input 
 										type="number" 
 										bind:value={customSchedule[i].amount}
 										oninput={handleManualEdit}
-										class="w-full text-right bg-white border border-gray-300 rounded text-[10px] font-bold text-gray-900 outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 p-1.5 transition-all"
+										class="w-full text-right bg-white border border-gray-200 rounded-lg text-xs font-black text-gray-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-2 transition-all shadow-sm"
 									/>
 								</div>
 							</div>

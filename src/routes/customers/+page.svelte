@@ -16,7 +16,33 @@
 	let { data, form } = $props();
 	let showAddModal = $state(false);
 	let editingCustomer = $state<any>(null);
+	let customerToDelete = $state<any>(null);
 	let searchQuery = $state('');
+
+	// Auto-fill state for Add Modal
+	let addFormState = $state({
+		cnic: '',
+		name: '',
+		mobile: '',
+		referenceName: '',
+		address: ''
+	});
+
+	function handleCnicInput(e: Event) {
+		const val = (e.target as HTMLInputElement).value;
+		addFormState.cnic = val;
+		
+		// Look for existing customer with this CNIC to auto-fill
+		if (val.length >= 13) {
+			const existing = data.customers.find((c: any) => c.cnic.replace(/\D/g, '') === val.replace(/\D/g, ''));
+			if (existing) {
+				addFormState.name = existing.name;
+				addFormState.mobile = existing.mobile;
+				addFormState.referenceName = existing.referenceName || '';
+				addFormState.address = existing.address || '';
+			}
+		}
+	}
 
 	const filteredCustomers = $derived(
 		data.customers.filter((c: any) => 
@@ -117,22 +143,12 @@
 											<Edit2 class="w-3 h-3" /> Edit
 										</button>
 										{#if customer._count?.plans === 0}
-										<form 
-											method="POST" 
-											action="?/delete&id={customer.id}" 
-											onsubmit={(e) => { if(!confirm('Are you sure you want to delete this customer?')) e.preventDefault(); }} 
-											use:enhance={() => {
-												return async ({ result }) => {
-													if (result.type === 'failure') {
-														alert(result.data?.error || 'Failed to delete customer.');
-													}
-												};
-											}}
+										<button 
+											onclick={() => customerToDelete = customer}
+											class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-[9px] font-black uppercase tracking-widest text-red-600 border border-gray-200 hover:border-red-200 hover:bg-red-50 transition-all shadow-sm active:scale-95"
 										>
-											<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-[9px] font-black uppercase tracking-widest text-red-600 border border-gray-200 hover:border-red-200 hover:bg-red-50 transition-all shadow-sm active:scale-95">
-												<Trash2 class="w-3 h-3" /> Delete
-											</button>
-										</form>
+											<Trash2 class="w-3 h-3" /> Delete
+										</button>
 										{:else}
 										<span class="px-2 py-1 bg-gray-50 text-[8px] font-black uppercase tracking-widest text-gray-400 border border-gray-100 rounded-lg cursor-not-allowed flex items-center gap-1" title="Active installments exist">
 											<AlertCircle class="w-2.5 h-2.5" /> Locked
@@ -201,23 +217,12 @@
 							<Edit2 class="w-3.5 h-3.5" /> Edit Profile
 						</button>
 						{#if customer._count?.plans === 0}
-						<form 
-							method="POST" 
-							action="?/delete&id={customer.id}" 
-							onsubmit={(e) => { if(!confirm('Are you sure you want to delete this customer?')) e.preventDefault(); }} 
-							use:enhance={() => {
-								return async ({ result }) => {
-									if (result.type === 'failure') {
-										alert(result.data?.error || 'Failed to delete customer.');
-									}
-								};
-							}}
-							class="flex-1"
+						<button 
+							onclick={() => customerToDelete = customer}
+							class="w-full flex justify-center items-center gap-1.5 px-3 py-2.5 rounded-xl bg-white border border-gray-200 text-[9px] font-black uppercase tracking-widest text-red-600 hover:border-red-200 hover:bg-red-50 active:scale-95 transition-all shadow-sm"
 						>
-							<button class="w-full flex justify-center items-center gap-1.5 px-3 py-2.5 rounded-xl bg-white border border-gray-200 text-[9px] font-black uppercase tracking-widest text-red-600 hover:border-red-200 hover:bg-red-50 active:scale-95 transition-all shadow-sm">
-								<Trash2 class="w-3.5 h-3.5" /> Delete
-							</button>
-						</form>
+							<Trash2 class="w-3.5 h-3.5" /> Delete
+						</button>
 						{:else}
 						<div class="flex-1 flex justify-center items-center gap-1.5 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100 text-[9px] font-black uppercase tracking-widest text-gray-400 cursor-not-allowed">
 							<AlertCircle class="w-3.5 h-3.5" /> Active Sale
@@ -243,9 +248,15 @@
 	<div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
 		<div class="bg-white w-full max-w-lg rounded-xl shadow-2xl border border-gray-200 overflow-hidden transform transition-all">
 			<div class="px-6 py-5 border-b border-gray-200 flex items-center justify-between bg-white sticky top-0">
-				<h2 class="text-lg font-black text-gray-900 tracking-tight">Add New Customer</h2>
+				<div>
+					<h2 class="text-lg font-black text-gray-900 tracking-tight">Add New Customer</h2>
+					<p class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1">Enter CNIC to auto-fill existing details</p>
+				</div>
 				<button 
-					onclick={() => showAddModal = false}
+					onclick={() => {
+						showAddModal = false;
+						addFormState = { cnic: '', name: '', mobile: '', referenceName: '', address: '' };
+					}}
 					class="p-2 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors active:scale-95"
 				>
 					<XCircle class="w-5 h-5" />
@@ -256,9 +267,11 @@
 				method="POST" 
 				action="?/create" 
 				use:enhance={() => {
-					return async ({ result }) => {
-						if (result.type === 'success') {
+					return async ({ result, update }) => {
+						await update();
+						if (result.type === 'success' || result.type === 'redirect') {
 							showAddModal = false;
+							addFormState = { cnic: '', name: '', mobile: '', referenceName: '', address: '' };
 						}
 					};
 				}}
@@ -272,30 +285,41 @@
 				{/if}
 
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-					<div class="space-y-1.5">
-						<label for="name" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Full Name</label>
-						<input type="text" name="name" id="name" required class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" />
+					<div class="space-y-1.5 md:col-span-2">
+						<label for="cnic" class="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+							CNIC Number <Search class="w-3 h-3 text-blue-500" />
+						</label>
+						<input 
+							type="text" 
+							name="cnic" 
+							id="cnic" 
+							bind:value={addFormState.cnic}
+							oninput={handleCnicInput}
+							placeholder="Type CNIC to check if customer exists..." 
+							required 
+							class="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-900 text-sm font-black tracking-widest placeholder:tracking-normal" 
+						/>
 					</div>
 					<div class="space-y-1.5">
-						<label for="cnic" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">CNIC Number</label>
-						<input type="text" name="cnic" id="cnic" placeholder="42101-XXXXXXX-X" required class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" />
+						<label for="name" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Full Name</label>
+						<input type="text" name="name" id="name" bind:value={addFormState.name} required class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" />
+					</div>
+					<div class="space-y-1.5">
+						<label for="mobile" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Mobile Number</label>
+						<input type="text" name="mobile" id="mobile" bind:value={addFormState.mobile} required class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" />
 					</div>
 				</div>
 
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+				<div class="grid grid-cols-1 gap-5">
 					<div class="space-y-1.5">
-						<label for="mobile" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Mobile Number</label>
-						<input type="text" name="mobile" id="mobile" required class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" />
-					</div>
-					<div class="space-y-1.5">
-						<label for="referenceName" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Reference Name</label>
-						<input type="text" name="referenceName" id="referenceName" class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" />
+						<label for="referenceName" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Reference Name (Optional)</label>
+						<input type="text" name="referenceName" id="referenceName" bind:value={addFormState.referenceName} class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" />
 					</div>
 				</div>
 
 				<div class="space-y-1.5">
 					<label for="address" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Resident Address</label>
-					<textarea name="address" id="address" rows="3" required class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold resize-none"></textarea>
+					<textarea name="address" id="address" bind:value={addFormState.address} rows="3" required class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold resize-none"></textarea>
 				</div>
 
 				<div class="flex items-center gap-3 pt-4 border-t border-gray-100">
@@ -336,8 +360,9 @@
 				method="POST" 
 				action="?/update&id={editingCustomer.id}" 
 				use:enhance={() => {
-					return async ({ result }) => {
-						if (result.type === 'success') {
+					return async ({ result, update }) => {
+						await update();
+						if (result.type === 'success' || result.type === 'redirect') {
 							editingCustomer = null;
 						} else if (result.type === 'failure') {
 							alert(result.data?.error || 'Failed to update customer');
@@ -398,6 +423,52 @@
 					</button>
 				</div>
 			</form>
+		</div>
+	</div>
+{/if}
+
+<!-- Delete Confirmation Modal -->
+{#if customerToDelete}
+	<div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+		<div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col p-6 text-center transform transition-all">
+			<div class="mx-auto w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4">
+				<AlertCircle class="w-6 h-6 text-red-600" />
+			</div>
+			<h2 class="text-xl font-black text-gray-900 tracking-tight mb-2">Delete Customer</h2>
+			<p class="text-xs font-bold text-gray-500 mb-6">Are you sure you want to delete <span class="text-gray-900">"{customerToDelete.name}"</span>? This action cannot be undone.</p>
+			
+			<div class="flex items-center gap-3">
+				<button 
+					type="button"
+					onclick={() => customerToDelete = null}
+					class="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl bg-gray-50 text-gray-700 font-bold hover:bg-gray-100 transition-colors text-xs uppercase tracking-widest active:scale-95"
+				>
+					Cancel
+				</button>
+				<form 
+					method="POST" 
+					action="?/delete&id={customerToDelete.id}" 
+					class="flex-1"
+					use:enhance={() => {
+						return async ({ result, update }) => {
+							await update();
+							if (result.type === 'success' || result.type === 'redirect') {
+								customerToDelete = null;
+							} else if (result.type === 'failure') {
+								alert(result.data?.error || 'Failed to delete customer.');
+								customerToDelete = null;
+							}
+						};
+					}}
+				>
+					<button 
+						type="submit"
+						class="w-full px-4 py-2.5 bg-red-600 text-white font-black rounded-xl shadow-sm hover:bg-red-700 transition-colors text-xs uppercase tracking-widest active:scale-95"
+					>
+						Delete
+					</button>
+				</form>
+			</div>
 		</div>
 	</div>
 {/if}

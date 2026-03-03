@@ -215,7 +215,16 @@
 			<form 
 				method="POST" 
 				action="?/create" 
-				use:enhance 
+				use:enhance={() => {
+					return async ({ result, update }) => {
+						await update();
+						if (result.type === 'success' || result.type === 'redirect') {
+							showAddModal = false;
+						} else if (result.type === 'failure') {
+							alert(result.data?.error || 'Failed to create product');
+						}
+					};
+				}}
 				class="flex-1 overflow-y-auto p-6 space-y-6"
 			>
 				{#if form?.error}
@@ -261,7 +270,7 @@
 							<input type="number" name="purchasePrice" id="purchasePrice" bind:value={purchasePrice} required class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" />
 						</div>
 						<div class="space-y-1.5">
-							<label for="cashPrice" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Retail / Cash Price</label>
+							<label for="cashPrice" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Sale Price</label>
 							<input type="number" name="cashPrice" id="cashPrice" bind:value={cashPrice} required class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" />
 						</div>
 					</div>
@@ -305,8 +314,9 @@
 				method="POST" 
 				action="?/update&id={editingProduct.id}" 
 				use:enhance={() => {
-					return async ({ result }) => {
-						if (result.type === 'success') {
+					return async ({ result, update }) => {
+						await update();
+						if (result.type === 'success' || result.type === 'redirect') {
 							editingProduct = null;
 						} else if (result.type === 'failure') {
 							alert(result.data?.error || 'Failed to update product');
@@ -351,7 +361,7 @@
 							<input type="number" name="purchasePrice" id="edit_purchasePrice" bind:value={purchasePrice} required class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" />
 						</div>
 						<div class="space-y-1.5">
-							<label for="edit_cashPrice" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Retail / Cash Price</label>
+							<label for="edit_cashPrice" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Sale Price</label>
 							<input type="number" name="cashPrice" id="edit_cashPrice" bind:value={cashPrice} required class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" />
 						</div>
 					</div>
@@ -401,8 +411,9 @@
 					action="?/delete&id={productToDelete.id}" 
 					class="flex-1"
 					use:enhance={() => {
-						return async ({ result }) => {
-							if (result.type === 'success') {
+						return async ({ result, update }) => {
+							await update();
+							if (result.type === 'success' || result.type === 'redirect') {
 								productToDelete = null;
 							} else if (result.type === 'failure') {
 								alert(result.data?.error || 'Failed to delete product.');
