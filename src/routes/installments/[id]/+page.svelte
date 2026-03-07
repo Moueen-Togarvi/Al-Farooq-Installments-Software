@@ -5,6 +5,7 @@
 		Printer, 
 		CheckCircle2, 
 		XCircle,
+		RefreshCcw,
 		DollarSign,
 		CalendarDays,
 		Banknote,
@@ -16,6 +17,7 @@
 	let paymentAmount = $state(0);
 	let paymentDateStr = $state(new Date().toLocaleDateString('en-CA'));
 	let submitting = $state(false);
+	let recalculating = $state(false);
 
 	// Object to hold custom dates for each row so user can edit right in the table
 	let rowDates = $state<Record<string, string>>({});
@@ -63,13 +65,42 @@
 		<a href="/installments" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all shadow-sm hover:shadow">
 			<ArrowLeft class="w-4 h-4" /> Back
 		</a>
-		<button 
-			onclick={() => window.print()}
-			class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-black text-white text-sm font-bold hover:bg-gray-900 transition-all shadow-md hover:shadow-lg active:scale-95"
-		>
-			<Printer class="w-4 h-4" />
-			Print Ledger
-		</button>
+		<div class="flex items-center gap-3">
+			<form
+				method="POST"
+				action="?/recalculateSchedule"
+				use:enhance={() => {
+					recalculating = true;
+					return async ({ result, update }) => {
+						recalculating = false;
+						if (result.type === 'success') {
+							await update();
+						} else if (result.type === 'failure' || result.type === 'error') {
+							const errorMsg = result.type === 'failure'
+								? (result.data?.error || 'Failed to recalculate schedule')
+								: 'A server error occurred';
+							alert(errorMsg);
+						}
+					};
+				}}
+			>
+				<button
+					type="submit"
+					disabled={recalculating}
+					class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all shadow-sm hover:shadow active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+				>
+					<RefreshCcw class="w-4 h-4 {recalculating ? 'animate-spin' : ''}" />
+					Recalculate
+				</button>
+			</form>
+			<button 
+				onclick={() => window.print()}
+				class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-black text-white text-sm font-bold hover:bg-gray-900 transition-all shadow-md hover:shadow-lg active:scale-95"
+			>
+				<Printer class="w-4 h-4" />
+				Print Ledger
+			</button>
+		</div>
 	</div>
 	
 	<!-- Financial Summary Bar (Digital Only) -->
@@ -274,6 +305,8 @@
 								</span>
 								<span class="text-[9px] text-emerald-600/70 font-mono">{formatDateShort(installment.paymentDate)}</span>
 							</div>
+						{:else if installment.status === 'PARTIAL'}
+							<span class="px-2 py-1 bg-amber-50 text-amber-700 text-[9px] font-black uppercase tracking-widest rounded-lg border border-amber-200">Partial</span>
 						{:else}
 							<span class="px-2 py-1 bg-orange-50 text-orange-700 text-[9px] font-black uppercase tracking-widest rounded-lg border border-orange-200">Unpaid</span>
 						{/if}
@@ -406,11 +439,15 @@
 								name="amount" 
 								id="amount" 
 								bind:value={paymentAmount}
+								min="0.01"
 								step="0.01"
 								required 
 								class="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl shadow-sm focus:ring-0 focus:border-black outline-none transition-all text-gray-900 font-black text-xl placeholder-gray-300" 
 							/>
 						</div>
+						<p class="text-[10px] text-gray-500 ml-1 font-medium">
+							If this payment is lower or higher than the remaining amount, the difference will move into the next installments automatically.
+						</p>
 					</div>
 
 					<!-- Distinct Date Display Box inside Modal -->
