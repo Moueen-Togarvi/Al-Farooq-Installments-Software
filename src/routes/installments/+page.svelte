@@ -12,16 +12,47 @@
 		Filter
 	} from 'lucide-svelte';
 
-	let { data } = $props();
-	let searchQuery = $state('');
+let { data } = $props();
+let searchQuery = $state('');
+let selectedInvestorId = $state('ALL');
+let selectedPlanStatus = $state('ACTIVE');
 
-	const filteredPlans = $derived(
-		data.plans.filter((p: any) => 
-			p.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-			p.product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			p.id.includes(searchQuery)
-		)
-	);
+type InvestorOption = {
+	id: string;
+	name: string;
+};
+
+const investorOptions = $derived(
+	([...new Map<string, InvestorOption>(
+		data.plans
+			.filter((plan: any) => plan.investor?.id && plan.investor?.name)
+			.map((plan: any) => [plan.investor.id, { id: plan.investor.id, name: plan.investor.name }])
+	).values()] as InvestorOption[]).sort((a, b) => a.name.localeCompare(b.name))
+);
+
+const filteredPlans = $derived(
+	data.plans.filter((p: any) => {
+		const normalizedSearch = searchQuery.toLowerCase();
+		const investorName = (p.investor?.name || '').toLowerCase();
+		const matchesSearch =
+			p.customer.name.toLowerCase().includes(normalizedSearch) ||
+			p.product.name.toLowerCase().includes(normalizedSearch) ||
+			investorName.includes(normalizedSearch) ||
+			p.id.includes(searchQuery) ||
+			String(p.billNumber || '').includes(searchQuery);
+
+		const matchesInvestor =
+			selectedInvestorId === 'ALL' ||
+			(selectedInvestorId === 'UNASSIGNED' && !p.investor?.id) ||
+			p.investor?.id === selectedInvestorId;
+
+		const matchesStatus =
+			selectedPlanStatus === 'ALL' ||
+			p.status === selectedPlanStatus;
+
+		return matchesSearch && matchesInvestor && matchesStatus;
+	})
+);
 
 	function formatCurrency(amount: number) {
 		return new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', minimumFractionDigits: 0 }).format(amount);
@@ -44,11 +75,16 @@
 	}
 
 	function getPaidCount(plan: any) {
-		return plan.installments?.length || 0;
+		return plan.paidInstallmentsCount ?? 0;
 	}
 
 	function getTotalCount(plan: any) {
-		return plan._count?.installments || 0;
+		return plan.totalInstallmentsCount ?? 0;
+	}
+
+	function formatBillNumber(value: any) {
+		const numeric = Number(value || 0);
+		return `#${String(Number.isFinite(numeric) ? numeric : 0).padStart(3, '0')}`;
 	}
 </script>
 
@@ -73,15 +109,36 @@
 			<Search class="absolute left-3 inset-y-0 my-auto w-5 h-5 text-gray-400" />
 			<input 
 				type="text" 
-				placeholder="Search by customer, product or plan ID..." 
+				placeholder="Search by customer, investor, product, bill # or plan ID..." 
 				bind:value={searchQuery}
 				class="w-full pl-10 pr-4 py-2 bg-transparent border-transparent focus:ring-0 transition-all outline-none text-gray-900 font-medium h-10"
 			/>
 		</div>
-		<button class="px-4 py-2 bg-gray-50 text-gray-700 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-gray-100 transition-colors border border-gray-200 border-transparent">
+		<div class="px-4 py-2 bg-gray-50 text-gray-700 rounded-lg text-sm font-medium flex items-center gap-2 border border-gray-200">
 			<Filter class="w-4 h-4" />
-			All Status
-		</button>
+			<select
+				bind:value={selectedInvestorId}
+				class="bg-transparent outline-none border-none text-sm font-medium cursor-pointer"
+			>
+				<option value="ALL">All Investors</option>
+				<option value="UNASSIGNED">Unassigned</option>
+				{#each investorOptions as investor}
+					<option value={investor.id}>{investor.name}</option>
+				{/each}
+			</select>
+		</div>
+		<div class="px-4 py-2 bg-gray-50 text-gray-700 rounded-lg text-sm font-medium flex items-center gap-2 border border-gray-200">
+			<Filter class="w-4 h-4" />
+			<select
+				bind:value={selectedPlanStatus}
+				class="bg-transparent outline-none border-none text-sm font-medium cursor-pointer"
+			>
+				<option value="ACTIVE">Active Only</option>
+				<option value="CLOSED">Closed</option>
+				<option value="DEFAULTED">Defaulted</option>
+				<option value="ALL">All Status</option>
+			</select>
+		</div>
 	</div>
 
 	<!-- Plan List (Responsive Layout) -->
@@ -93,6 +150,7 @@
 					<tr class="bg-gray-50 border-b border-gray-200">
 						<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Plan Details</th>
 						<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Customer</th>
+						<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Investor</th>
 						<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Product Info</th>
 						<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Financials</th>
 						<th class="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Progress</th>
@@ -104,7 +162,7 @@
 						<tr class="hover:bg-gray-50 transition-colors group">
 							<td class="px-6 py-4">
 								<div class="space-y-1">
-									<p class="text-xs font-black text-black">#{plan.id.substring(0, 8).toUpperCase()}</p>
+									<p class="text-xs font-black text-black">{formatBillNumber(plan.billNumber)}</p>
 									<span class="inline-block px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider border {getPlanStatusColor(plan.status)}">
 										{plan.status}
 									</span>
@@ -119,6 +177,14 @@
 								</div>
 							</td>
 							<td class="px-6 py-4">
+								<div class="space-y-1">
+									<p class="text-sm font-black text-gray-900">{plan.investor?.name || 'Unassigned'}</p>
+									<span class="inline-block px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-700 border border-indigo-100">
+										Investor
+									</span>
+								</div>
+							</td>
+							<td class="px-6 py-4">
 								<div class="space-y-1.5">
 									<p class="text-sm font-black text-gray-900">{plan.product.name}</p>
 									<span class="inline-block px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-gray-100 text-gray-600 border border-gray-200 shadow-sm">
@@ -130,6 +196,9 @@
 								<div class="space-y-0.5">
 									<p class="text-xs font-bold text-gray-600">Total: <span class="font-black text-black">{formatCurrency(plan.totalAmount)}</span></p>
 									<p class="text-[10px] font-bold text-red-600 uppercase tracking-wider">Remaining: <span class="font-black text-red-600">{formatCurrency(plan.remainingBalance)}</span></p>
+									{#if plan.monthlyUnpaidCount > 0}
+										<p class="text-[10px] font-black text-amber-600 uppercase tracking-wider">Current Month Unpaid: {plan.monthlyUnpaidCount}</p>
+									{/if}
 								</div>
 							</td>
 							<td class="px-6 py-4 w-48">
@@ -171,7 +240,7 @@
 						</tr>
 					{:else}
 						<tr>
-							<td colspan="6" class="px-6 py-16 text-center">
+							<td colspan="7" class="px-6 py-16 text-center">
 								<div class="flex flex-col items-center gap-2">
 									<TrendingUp class="w-10 h-10 text-gray-300 mb-2" />
 									<p class="text-black font-black uppercase tracking-widest text-sm">No active installment plans</p>
@@ -195,7 +264,8 @@
 							</div>
 							<div>
 								<p class="text-base font-black text-black leading-tight">{plan.customer.name}</p>
-								<p class="text-xs font-bold text-gray-500 mt-0.5">#{plan.id.substring(0, 8).toUpperCase()}</p>
+								<p class="text-xs font-bold text-gray-500 mt-0.5">{formatBillNumber(plan.billNumber)}</p>
+								<p class="text-[10px] font-black text-indigo-700 mt-1">Investor: {plan.investor?.name || 'Unassigned'}</p>
 							</div>
 						</div>
 						<span class="px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border {getPlanStatusColor(plan.status)} mt-1">

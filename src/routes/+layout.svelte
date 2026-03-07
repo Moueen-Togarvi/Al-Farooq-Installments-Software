@@ -8,6 +8,7 @@
 		CalendarRange, 
 		WalletCards, 
 		BarChart3, 
+		PiggyBank,
 		LogOut,
 		Menu,
 		X,
@@ -23,6 +24,7 @@
 		{ name: 'Products', href: '/products', icon: Package },
 		{ name: 'Installments', href: '/installments', icon: CalendarRange },
 		{ name: 'Payments', href: '/payments', icon: WalletCards },
+		{ name: 'Investments', href: '/investments', icon: PiggyBank },
 		{ name: 'Reports', href: '/reports', icon: BarChart3 },
 	];
 
@@ -167,4 +169,3 @@
 		</nav>
 	</div>
 {/if}
-

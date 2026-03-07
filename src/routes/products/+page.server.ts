@@ -1,4 +1,5 @@
 import { prisma } from '$lib/server/prisma';
+import { addProductPurchase, InvestmentValidationError } from '$lib/server/investment';
 import { fail } from '@sveltejs/kit';
 import { serializeDecimals } from '$lib/utils';
 import type { Actions, PageServerLoad } from './$types';
@@ -29,22 +30,33 @@ export const actions: Actions = {
         }
 
         try {
-            await prisma.product.create({
-                data: {
-                    name,
-                    category,
-                    purchasePrice: cashPrice,
-                    cashPrice,
-                    installmentPrice: cashPrice,
-                    downPayment: 0,
-                    profit: 0,
-                    durationMonths: 12,
-                    monthlyAmount: 0
-                }
+            await prisma.$transaction(async (tx: any) => {
+                const product = await tx.product.create({
+                    data: {
+                        name,
+                        category,
+                        purchasePrice: cashPrice,
+                        cashPrice,
+                        installmentPrice: cashPrice,
+                        downPayment: 0,
+                        profit: 0,
+                        durationMonths: 12,
+                        monthlyAmount: 0
+                    }
+                });
+
+                await addProductPurchase(tx, {
+                    amount: cashPrice,
+                    productId: product.id,
+                    note: `Stock purchase for ${name}`
+                });
             });
         } catch (err: any) {
             // Re-throw SvelteKit redirects and failures
             if (err.status && (err.location || err.data)) throw err;
+            if (err instanceof InvestmentValidationError) {
+                return fail(400, { error: err.message });
+            }
 
             console.error('PRODUCT CREATE ERROR:');
             console.dir(err, { depth: null });

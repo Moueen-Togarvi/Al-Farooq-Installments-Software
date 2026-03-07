@@ -2,6 +2,7 @@
 	import { 
 		WalletCards, 
 		Search, 
+		Filter,
 		Calendar, 
 		User, 
 		Package, 
@@ -12,13 +13,24 @@
 
 	let { data } = $props();
 	let searchQuery = $state('');
+	let selectedPlanStatus = $state('OPEN');
 
 	const filteredPayments = $derived(
-		data.payments.filter((p: any) => 
-			p.installment.plan.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-			p.installment.plan.product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			p.id.toLowerCase().includes(searchQuery.toLowerCase())
-		)
+		data.payments.filter((p: any) => {
+			const normalizedSearch = searchQuery.toLowerCase();
+			const matchesSearch =
+				p.installment.plan.customer.name.toLowerCase().includes(normalizedSearch) || 
+				p.installment.plan.product.name.toLowerCase().includes(normalizedSearch) ||
+				String(p.installment.plan.billNumber || '').includes(searchQuery) ||
+				p.id.toLowerCase().includes(normalizedSearch);
+
+			const matchesStatus =
+				selectedPlanStatus === 'ALL' ||
+				(selectedPlanStatus === 'OPEN' && p.installment.plan.status !== 'CLOSED') ||
+				p.installment.plan.status === selectedPlanStatus;
+
+			return matchesSearch && matchesStatus;
+		})
 	);
 
 	function formatCurrency(amount: number) {
@@ -45,7 +57,7 @@
 	</div>
 
 	<!-- Search & Filters -->
-	<div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex items-center gap-4">
+	<div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-wrap items-center gap-4">
 		<div class="relative flex-1">
 			<Search class="absolute left-3 inset-y-0 my-auto w-5 h-5 text-gray-400" />
 			<input 
@@ -54,6 +66,19 @@
 				bind:value={searchQuery}
 				class="w-full pl-10 pr-4 py-2 bg-transparent border-transparent focus:ring-0 transition-all outline-none text-gray-900 font-medium h-10"
 			/>
+		</div>
+		<div class="px-4 py-2 bg-gray-50 text-gray-700 rounded-lg text-sm font-medium flex items-center gap-2 border border-gray-200">
+			<Filter class="w-4 h-4" />
+			<select
+				bind:value={selectedPlanStatus}
+				class="bg-transparent outline-none border-none text-sm font-medium cursor-pointer"
+			>
+				<option value="OPEN">Open Plans</option>
+				<option value="CLOSED">Closed Plans</option>
+				<option value="ACTIVE">Active Plans</option>
+				<option value="DEFAULTED">Defaulted Plans</option>
+				<option value="ALL">All Status</option>
+			</select>
 		</div>
 	</div>
 

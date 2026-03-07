@@ -1,4 +1,5 @@
 import { prisma } from '$lib/server/prisma';
+import { addInstallmentCollection } from '$lib/server/investment';
 import { fail, redirect } from '@sveltejs/kit';
 import { serializeDecimals } from '$lib/utils';
 import type { Actions, PageServerLoad } from './$types';
@@ -38,7 +39,7 @@ function generateInstallments(planId: string, startDate: Date, durationMonths: n
 }
 
 export const load: PageServerLoad = async () => {
-    const [customers, products] = await Promise.all([
+    const [customers, products, investors] = await Promise.all([
         prisma.customer.findMany({
             where: { status: 'ACTIVE' },
             select: {
@@ -52,12 +53,22 @@ export const load: PageServerLoad = async () => {
                 cashPrice: true
             },
             orderBy: { name: 'asc' }
+        }),
+        prisma.investor.findMany({
+            where: { status: 'ACTIVE' },
+            select: {
+                id: true,
+                name: true,
+                mobile: true
+            },
+            orderBy: { name: 'asc' }
         })
     ]);
 
     return {
         customers: serializeDecimals(customers),
-        products: serializeDecimals(products)
+        products: serializeDecimals(products),
+        investors: serializeDecimals(investors)
     };
 };
 
@@ -66,18 +77,28 @@ export const actions: Actions = {
         const data = await request.formData();
         const customerId = data.get('customerId') as string;
         const productId = data.get('productId') as string;
+        const investorId = data.get('investorId') as string;
         const startDateStr = data.get('startDate') as string;
 
-        if (!customerId || !productId || !startDateStr) {
+        if (!customerId || !productId || !startDateStr || !investorId) {
             return fail(400, { error: 'Missing required fields' });
         }
 
-        const product = await prisma.product.findUnique({
-            where: { id: productId }
-        });
+        const [product, investor] = await Promise.all([
+            prisma.product.findUnique({
+                where: { id: productId }
+            }),
+            prisma.investor.findUnique({
+                where: { id: investorId },
+                select: { id: true, status: true }
+            })
+        ]);
 
         if (!product) {
             return fail(400, { error: 'Product not found' });
+        }
+        if (!investor || investor.status !== 'ACTIVE') {
+            return fail(400, { error: 'Selected investor is invalid or inactive' });
         }
 
         const customScheduleStr = data.get('customSchedule') as string;
@@ -173,6 +194,7 @@ export const actions: Actions = {
                     data: {
                         customerId,
                         productId,
+                        investorId,
                         totalAmount,
                         downPayment,
                         remainingBalance,
@@ -197,6 +219,16 @@ export const actions: Actions = {
                 await tx.installment.createMany({
                     data: installments
                 });
+
+                if (downPayment > 0) {
+                    await addInstallmentCollection(tx, {
+                        amount: downPayment,
+                        investorId,
+                        planId: plan.id,
+                        note: `Advance payment on bill #${String(plan.billNumber).padStart(3, '0')}`,
+                        collectedAt: startDate
+                    });
+                }
             });
         } catch (err: any) {
             // Re-throw SvelteKit redirects and failures

@@ -52,6 +52,11 @@
 		if (!date) return '';
 		return new Date(date).getFullYear();
 	}
+
+	function formatBillNumber(value: any) {
+		const numeric = Number(value || 0);
+		return `#${String(Number.isFinite(numeric) ? numeric : 0).padStart(3, '0')}`;
+	}
 	
 	let totalInstallmentSum = $derived(data.plan.installments.reduce((acc: number, cur: any) => acc + Number(cur.amount), 0));
 	let totalReceivedSum = $derived(data.plan.installments.reduce((acc: number, cur: any) => acc + Number(cur.receivedAmount), 0));
@@ -173,7 +178,14 @@
 			
 			<div class="bg-white md:bg-transparent p-3 md:p-5 rounded-xl md:rounded-none border border-gray-100 md:border-0 shadow-sm md:shadow-none flex flex-col gap-1 md:border-t border-gray-200 print:border-t-0 print:border-black print:p-2 md:bg-blue-50/50 print:bg-transparent">
 				<span class="text-[9px] md:text-[10px] font-black text-blue-600 print:text-black uppercase tracking-widest leading-none">Bill #</span>
-				<span class="font-black font-mono text-blue-700 text-sm md:text-lg print:text-sm print:text-black leading-tight print:leading-tight">#{data.plan.id.substring(0,6).toUpperCase()}</span>
+				<span class="font-black font-mono text-blue-700 text-sm md:text-lg print:text-sm print:text-black leading-tight print:leading-tight">{formatBillNumber(data.plan.billNumber)}</span>
+			</div>
+
+			<div class="col-span-2 md:col-span-1 bg-white md:bg-transparent p-3 md:p-5 rounded-xl md:rounded-none border border-gray-100 md:border-0 shadow-sm md:shadow-none flex flex-col gap-1 md:border-t border-gray-200 print:border-t-0 print:border-black print:p-2">
+				<span class="text-[9px] md:text-[10px] font-black text-blue-600 print:text-black uppercase tracking-widest leading-none">Investor</span>
+				<span class="font-bold text-gray-900 text-xs md:text-base print:text-xs leading-tight print:leading-tight">
+					{data.plan.investor?.name || 'Not Assigned'}
+				</span>
 			</div>
 
 		</div>

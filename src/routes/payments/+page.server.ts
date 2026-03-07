@@ -20,6 +20,8 @@ export const load: PageServerLoad = async () => {
                     plan: {
                         select: {
                             id: true,
+                            billNumber: true,
+                            status: true,
                             customer: { select: { name: true } },
                             product: { select: { name: true } }
                         }

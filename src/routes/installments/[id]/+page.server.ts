@@ -1,4 +1,5 @@
 import { prisma } from '$lib/server/prisma';
+import { addInstallmentCollection } from '$lib/server/investment';
 import { error, fail } from '@sveltejs/kit';
 import { serializeDecimals } from '$lib/utils';
 import type { Actions, PageServerLoad } from './$types';
@@ -148,6 +149,7 @@ export const load: PageServerLoad = async ({ params }) => {
             include: {
                 customer: true,
                 product: true,
+                investor: true,
                 installments: {
                     orderBy: { serialNumber: 'asc' }
                     // Removed payments: true — huge performance win
@@ -276,7 +278,13 @@ export const actions: Actions = {
                         pendingAmount: true,
                         status: true,
                         paymentDate: true,
-                        serialNumber: true
+                        serialNumber: true,
+                        plan: {
+                            select: {
+                                investorId: true,
+                                billNumber: true
+                            }
+                        }
                     }
                 });
 
@@ -455,6 +463,14 @@ export const actions: Actions = {
                         }
                     });
                 }
+
+                await addInstallmentCollection(tx, {
+                    amount,
+                    investorId: installment.plan?.investorId || null,
+                    planId: installment.planId,
+                    note: `Installment payment for bill #${String(installment.plan?.billNumber || 0).padStart(3, '0')}`,
+                    collectedAt: paymentDateObj
+                });
             }, {
                 timeout: TRANSACTION_TIMEOUT_MS,
                 maxWait: TRANSACTION_MAX_WAIT_MS

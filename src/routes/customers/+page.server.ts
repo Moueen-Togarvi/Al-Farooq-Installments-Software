@@ -1,7 +1,11 @@
 import { prisma } from '$lib/server/prisma';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { serializeDecimals } from '$lib/utils';
 import type { Actions, PageServerLoad } from './$types';
+
+function normalizeCnic(value: string) {
+    return value.replace(/\D/g, '');
+}
 
 export const load: PageServerLoad = async () => {
     const customers = await prisma.customer.findMany({
@@ -17,7 +21,10 @@ export const load: PageServerLoad = async () => {
                 select: { plans: { where: { status: 'ACTIVE' } } }
             }
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: [
+            { status: 'asc' },
+            { createdAt: 'desc' }
+        ]
     });
     return { customers: serializeDecimals(customers) };
 };
@@ -25,14 +32,17 @@ export const load: PageServerLoad = async () => {
 export const actions: Actions = {
     create: async ({ request }) => {
         const data = await request.formData();
-        const name = data.get('name') as string;
-        const cnic = data.get('cnic') as string;
-        const mobile = data.get('mobile') as string;
-        const address = data.get('address') as string;
-        const referenceName = data.get('referenceName') as string;
+        const name = (data.get('name') as string || '').trim();
+        const cnic = normalizeCnic((data.get('cnic') as string || '').trim());
+        const mobile = (data.get('mobile') as string || '').trim();
+        const address = (data.get('address') as string || '').trim();
+        const referenceName = (data.get('referenceName') as string || '').trim();
 
         if (!name || !cnic || !mobile || !address) {
             return fail(400, { error: 'Missing required fields' });
+        }
+        if (cnic.length !== 13) {
+            return fail(400, { error: 'CNIC must contain exactly 13 digits' });
         }
 
         try {
@@ -62,29 +72,52 @@ export const actions: Actions = {
         if (!id) return fail(400, { error: 'Missing customer id' });
 
         const data = await request.formData();
-        const name = data.get('name') as string;
-        const cnic = data.get('cnic') as string;
-        const mobile = data.get('mobile') as string;
-        const address = data.get('address') as string;
-        const referenceName = data.get('referenceName') as string;
+        const name = (data.get('name') as string || '').trim();
+        const cnic = normalizeCnic((data.get('cnic') as string || '').trim());
+        const mobile = (data.get('mobile') as string || '').trim();
+        const address = (data.get('address') as string || '').trim();
+        const referenceName = (data.get('referenceName') as string || '').trim();
         const status = data.get('status') as string;
 
         if (!name || !cnic || !mobile || !address) {
             return fail(400, { error: 'Missing required fields' });
         }
+        if (cnic.length !== 13) {
+            return fail(400, { error: 'CNIC must contain exactly 13 digits' });
+        }
 
         try {
-            await prisma.customer.update({
-                where: { id },
-                data: {
-                    name,
-                    cnic,
-                    mobile,
-                    address,
-                    referenceName: referenceName || null,
-                    status: status || undefined
-                }
-            });
+            if (status === 'CLOSED') {
+                await prisma.$transaction(async (tx: any) => {
+                    await tx.installmentPlan.deleteMany({
+                        where: { customerId: id }
+                    });
+
+                    await tx.customer.update({
+                        where: { id },
+                        data: {
+                            name,
+                            cnic,
+                            mobile,
+                            address,
+                            referenceName: referenceName || null,
+                            status: 'CLOSED'
+                        }
+                    });
+                });
+            } else {
+                await prisma.customer.update({
+                    where: { id },
+                    data: {
+                        name,
+                        cnic,
+                        mobile,
+                        address,
+                        referenceName: referenceName || null,
+                        status: status || undefined
+                    }
+                });
+            }
         } catch (err: any) {
             console.error(err);
             if (err.code === 'P2002') return fail(400, { error: 'CNIC already exists' });

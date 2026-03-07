@@ -9,7 +9,8 @@
 		DollarSign,
 		AlertCircle,
 		CheckCircle2,
-		Percent
+		Percent,
+		Users
 	} from 'lucide-svelte';
 
 	let { data, form } = $props();
@@ -21,6 +22,7 @@
 	};
 
 	let selectedCustomerId = $state('');
+	let selectedInvestorId = $state('');
 	let selectedProductId = $state('');
 	let customerSearchQuery = $state('');
 	let showCustomerDropdown = $state(false);
@@ -34,6 +36,7 @@
 
 	const selectedProduct = $derived(data.products.find((p: any) => p.id === selectedProductId));
 	const selectedCustomer = $derived(data.customers.find((c: any) => c.id === selectedCustomerId));
+	const selectedInvestor = $derived(data.investors.find((i: any) => i.id === selectedInvestorId));
 
 	const filteredCustomers = $derived(
 		customerSearchQuery
@@ -66,7 +69,7 @@
 	const scheduleMatches = $derived(Math.abs(scheduleTotal - remainingBalance) <= 0.01);
 	const advanceTooHigh = $derived(Boolean(selectedProduct) && downPayment >= sellingPrice);
 	const canSubmit = $derived(
-		Boolean(selectedCustomerId && selectedProductId && startDate) &&
+		Boolean(selectedCustomerId && selectedInvestorId && selectedProductId && startDate) &&
 		duration > 0 &&
 		!advanceTooHigh &&
 		remainingBalance > 0 &&
@@ -225,8 +228,50 @@
 
 			<div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
 				<div class="flex items-center gap-2 text-gray-900 border-b border-gray-100 pb-3 mb-5">
+					<Users class="w-4 h-4" />
+					<span class="text-sm font-semibold">Step 2: Select Investor</span>
+				</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
+					<div class="space-y-2">
+						<label for="investorId" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Investor</label>
+						<select
+							name="investorId"
+							id="investorId"
+							bind:value={selectedInvestorId}
+							required
+							class="w-full px-3 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm appearance-none cursor-pointer"
+						>
+							<option value="">Select investor...</option>
+							{#each data.investors as investor}
+								<option value={investor.id}>{investor.name}{investor.mobile ? ` (${investor.mobile})` : ''}</option>
+							{/each}
+						</select>
+						{#if data.investors.length === 0}
+							<p class="text-[10px] font-bold text-red-600">
+								No active investor found. Create one from <a href="/investments" class="underline">Investment Management</a>.
+							</p>
+						{/if}
+					</div>
+					{#if selectedInvestor}
+						<div class="bg-blue-50 p-4 rounded-xl border border-blue-200 flex items-center gap-3 shadow-sm">
+							<div class="w-12 h-12 rounded-full bg-blue-700 flex items-center justify-center font-black text-white shadow-sm shrink-0 text-sm">
+								{selectedInvestor.name.substring(0, 2).toUpperCase()}
+							</div>
+							<div class="space-y-1 overflow-hidden">
+								<p class="text-sm font-black text-blue-900 truncate">{selectedInvestor.name}</p>
+								<p class="text-[9px] font-black text-blue-600 uppercase tracking-widest leading-none">
+									{selectedInvestor.mobile || 'No contact number'}
+								</p>
+							</div>
+						</div>
+					{/if}
+				</div>
+			</div>
+
+			<div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+				<div class="flex items-center gap-2 text-gray-900 border-b border-gray-100 pb-3 mb-5">
 					<Package class="w-4 h-4" />
-					<span class="text-sm font-semibold">Step 2: Select Product</span>
+					<span class="text-sm font-semibold">Step 3: Select Product</span>
 				</div>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
 					<div class="space-y-2">
@@ -272,7 +317,7 @@
 			<div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
 				<div class="flex items-center gap-2 text-gray-900 border-b border-gray-100 pb-3 mb-5">
 					<Clock class="w-4 h-4" />
-					<span class="text-sm font-semibold">Step 3: Plan Setup</span>
+					<span class="text-sm font-semibold">Step 4: Plan Setup</span>
 				</div>
 				<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 w-full">
 					<div class="space-y-2">

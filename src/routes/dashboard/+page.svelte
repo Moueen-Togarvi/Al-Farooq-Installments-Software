@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { 
 		Users, 
-		TrendingUp, 
 		AlertTriangle, 
 		Calendar, 
 		DollarSign,
 		CheckCircle2,
-		ShieldCheck
+		ShieldCheck,
+		PiggyBank
 	} from 'lucide-svelte';
 
 	let { data } = $props();
@@ -22,7 +22,8 @@
 	const statsCards = $derived([
 		{ name: 'Total Customers', value: data.stats.totalCustomers, icon: Users },
 		{ name: 'Active Plans', value: data.stats.activePlans, icon: ShieldCheck },
-		{ name: 'Total Collected', value: formatCurrency(data.stats.totalReceived), icon: DollarSign },
+		{ name: 'Investment Balance', value: formatCurrency(data.stats.investmentBalance), icon: PiggyBank },
+		{ name: `Collected (${data.selectedMonthLabel})`, value: formatCurrency(data.stats.totalCollectedThisMonth), icon: DollarSign },
 		{ name: 'Pending Balance', value: formatCurrency(data.stats.totalPending), icon: AlertTriangle },
 	]);
 </script>
@@ -41,8 +42,38 @@
 		</div>
 	{/if}
 
+	<div class="bg-white p-4 sm:p-5 rounded-xl border border-gray-200 shadow-sm">
+		<form method="GET" class="flex flex-col lg:flex-row lg:items-end gap-3 lg:gap-4">
+			<div class="flex-1">
+				<p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Collection Month Filter</p>
+				<p class="text-xs font-bold text-gray-500 mt-1">Showing monthly collection for {data.selectedMonthLabel}</p>
+			</div>
+			<div class="flex flex-col sm:flex-row sm:items-center gap-2">
+				<input
+					type="month"
+					name="month"
+					value={data.selectedMonth}
+					onchange={(event) => (event.currentTarget as HTMLInputElement).form?.requestSubmit()}
+					class="px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-bold text-gray-900 outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
+				/>
+				<button
+					type="submit"
+					class="px-4 py-2.5 rounded-lg bg-black text-white text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-colors"
+				>
+					Apply
+				</button>
+				<a
+					href="/dashboard"
+					class="px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 text-xs font-black uppercase tracking-widest hover:bg-gray-50 transition-colors text-center"
+				>
+					Current
+				</a>
+			</div>
+		</form>
+	</div>
+
 	<!-- Stats Grid -->
-	<div class="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-6">
+	<div class="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-6">
 		{#each statsCards as stat}
 			{@const Icon = stat.icon}
 			<div class="bg-white p-4 sm:p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between group">
