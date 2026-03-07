@@ -9,7 +9,6 @@ export const load: PageServerLoad = async () => {
             id: true,
             name: true,
             category: true,
-            purchasePrice: true,
             cashPrice: true,
             createdAt: true
         },
@@ -23,10 +22,9 @@ export const actions: Actions = {
         const data = await request.formData();
         const name = data.get('name') as string;
         const category = data.get('category') as string;
-        const purchasePrice = parseFloat(data.get('purchasePrice') as string);
         const cashPrice = parseFloat(data.get('cashPrice') as string);
 
-        if (!name || isNaN(purchasePrice) || isNaN(cashPrice)) {
+        if (!name || isNaN(cashPrice) || cashPrice <= 0) {
             return fail(400, { error: 'Missing or invalid fields' });
         }
 
@@ -35,12 +33,12 @@ export const actions: Actions = {
                 data: {
                     name,
                     category,
-                    purchasePrice,
+                    purchasePrice: cashPrice,
                     cashPrice,
-                    installmentPrice: 0,
+                    installmentPrice: cashPrice,
                     downPayment: 0,
                     profit: 0,
-                    durationMonths: 1,
+                    durationMonths: 12,
                     monthlyAmount: 0
                 }
             });
@@ -63,10 +61,9 @@ export const actions: Actions = {
         const data = await request.formData();
         const name = data.get('name') as string;
         const category = data.get('category') as string;
-        const purchasePrice = parseFloat(data.get('purchasePrice') as string);
         const cashPrice = parseFloat(data.get('cashPrice') as string);
 
-        if (!name || isNaN(purchasePrice) || isNaN(cashPrice)) {
+        if (!name || isNaN(cashPrice) || cashPrice <= 0) {
             return fail(400, { error: 'Missing or invalid fields' });
         }
 
@@ -76,8 +73,10 @@ export const actions: Actions = {
                 data: {
                     name,
                     category,
-                    purchasePrice,
-                    cashPrice
+                    purchasePrice: cashPrice,
+                    cashPrice,
+                    installmentPrice: cashPrice,
+                    profit: 0
                 }
             });
         } catch (err: any) {

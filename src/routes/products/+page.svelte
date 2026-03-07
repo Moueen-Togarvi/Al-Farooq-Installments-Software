@@ -1,17 +1,16 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { 
-		Plus, 
-		Search, 
-		Trash2, 
-		Edit2, 
+	import {
+		Plus,
+		Search,
+		Trash2,
+		Edit2,
 		PackagePlus,
 		DollarSign,
 		Tag,
 		Info,
 		AlertCircle,
-		XCircle,
-		TrendingUp
+		XCircle
 	} from 'lucide-svelte';
 
 	let { data, form } = $props();
@@ -20,21 +19,23 @@
 	let productToDelete = $state<any>(null);
 	let searchQuery = $state('');
 
-	// Form logic
-	let purchasePrice = $state(0);
-	let cashPrice = $state(0);
-
-	// Reset custom values when source changes
+	let sellingPrice = $state<number>(0);
+	let editSellingPrice = $state<number>(0);
 
 	const filteredProducts = $derived(
-		data.products.filter((p: any) => 
-			p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+		data.products.filter((p: any) =>
+			p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 			p.category.toLowerCase().includes(searchQuery.toLowerCase())
 		)
 	);
 
 	function formatCurrency(amount: number) {
 		return new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', minimumFractionDigits: 0 }).format(amount);
+	}
+
+	function openEditModal(product: any) {
+		editingProduct = { ...product };
+		editSellingPrice = Number(product.cashPrice || 0);
 	}
 </script>
 
@@ -92,12 +93,7 @@
 							<td class="px-6 py-4">
 								<div class="flex items-center gap-4 border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 w-fit">
 									<div class="flex flex-col">
-										<span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Purchase</span>
-										<span class="text-sm font-black text-gray-900 leading-none">{formatCurrency(product.purchasePrice)}</span>
-									</div>
-									<div class="w-px h-6 bg-gray-200"></div>
-									<div class="flex flex-col">
-										<span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Cash Sale</span>
+										<span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Selling Price</span>
 										<span class="text-sm font-black text-emerald-600 leading-none">{formatCurrency(product.cashPrice)}</span>
 									</div>
 								</div>
@@ -105,12 +101,8 @@
 							<td class="px-6 py-4">
 								<div class="flex items-center justify-center">
 									<div class="flex items-center gap-1.5">
-										<button 
-											onclick={() => {
-												editingProduct = { ...product };
-												purchasePrice = product.purchasePrice;
-												cashPrice = product.cashPrice;
-											}}
+										<button
+											onclick={() => openEditModal(product)}
 											class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-[9px] font-black uppercase tracking-widest text-blue-600 border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-all shadow-sm active:scale-95"
 										>
 											<Edit2 class="w-3 h-3" /> Edit
@@ -127,7 +119,7 @@
 						</tr>
 					{:else}
 						<tr>
-							<td colspan="5" class="px-6 py-16 text-center">
+							<td colspan="3" class="px-6 py-16 text-center">
 								<div class="flex flex-col items-center gap-2">
 									<Tag class="w-10 h-10 text-gray-200 mb-2" />
 									<p class="text-gray-400 font-black uppercase tracking-widest text-[10px]">No products cataloged</p>
@@ -156,24 +148,15 @@
 
 						<div class="flex items-center gap-4 border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50">
 							<div class="flex-1 flex flex-col">
-								<span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Purchase</span>
-								<span class="text-sm font-black text-gray-900 leading-none">{formatCurrency(product.purchasePrice)}</span>
-							</div>
-							<div class="w-px h-6 bg-gray-200"></div>
-							<div class="flex-1 flex flex-col">
-								<span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Cash Sale</span>
+								<span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Selling Price</span>
 								<span class="text-sm font-black text-emerald-600 leading-none">{formatCurrency(product.cashPrice)}</span>
 							</div>
 						</div>
 					</div>
 
 					<div class="flex items-center justify-between gap-2 pt-1">
-						<button 
-							onclick={() => {
-								editingProduct = { ...product };
-								purchasePrice = product.purchasePrice;
-								cashPrice = product.cashPrice;
-							}}
+						<button
+							onclick={() => openEditModal(product)}
 							class="flex-1 flex justify-center items-center gap-1.5 px-3 py-2.5 rounded-xl bg-white border border-gray-200 text-[9px] font-black uppercase tracking-widest text-blue-600 hover:border-blue-200 hover:bg-blue-50 active:scale-95 transition-all shadow-sm"
 						>
 							<Edit2 class="w-3.5 h-3.5" /> Edit Mode
@@ -212,14 +195,15 @@
 				</button>
 			</div>
 
-			<form 
-				method="POST" 
-				action="?/create" 
+			<form
+				method="POST"
+				action="?/create"
 				use:enhance={() => {
 					return async ({ result, update }) => {
 						await update();
 						if (result.type === 'success' || result.type === 'redirect') {
 							showAddModal = false;
+							sellingPrice = 0;
 						} else if (result.type === 'failure') {
 							alert(result.data?.error || 'Failed to create product');
 						}
@@ -264,14 +248,19 @@
 						<DollarSign class="w-4 h-4" />
 						<span class="text-sm font-bold uppercase tracking-widest text-gray-500">Pricing & Calculations</span>
 					</div>
-					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-5">
+
+					<div class="grid grid-cols-1 gap-5">
 						<div class="space-y-1.5">
-							<label for="purchasePrice" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Purchase Price</label>
-							<input type="number" name="purchasePrice" id="purchasePrice" bind:value={purchasePrice} required class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" />
-						</div>
-						<div class="space-y-1.5">
-							<label for="cashPrice" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Sale Price</label>
-							<input type="number" name="cashPrice" id="cashPrice" bind:value={cashPrice} required class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" />
+							<label for="cashPrice" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Selling Price</label>
+							<input
+								type="number"
+								name="cashPrice"
+								id="cashPrice"
+								bind:value={sellingPrice}
+								min="1"
+								required
+								class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold"
+							/>
 						</div>
 					</div>
 				</div>
@@ -302,7 +291,7 @@
 		<div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl border border-gray-200 overflow-hidden max-h-[90vh] flex flex-col">
 			<div class="px-6 py-5 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
 				<h2 class="text-lg font-black text-gray-900 tracking-tight">Edit Product Configuration</h2>
-				<button 
+				<button
 					onclick={() => editingProduct = null}
 					class="p-2 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors active:scale-95"
 				>
@@ -310,9 +299,9 @@
 				</button>
 			</div>
 
-			<form 
-				method="POST" 
-				action="?/update&id={editingProduct.id}" 
+			<form
+				method="POST"
+				action="?/update&id={editingProduct.id}"
 				use:enhance={() => {
 					return async ({ result, update }) => {
 						await update();
@@ -355,14 +344,19 @@
 						<DollarSign class="w-4 h-4" />
 						<span class="text-sm font-bold uppercase tracking-widest text-gray-500">Pricing & Calculations</span>
 					</div>
-					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-5">
+
+					<div class="grid grid-cols-1 gap-5">
 						<div class="space-y-1.5">
-							<label for="edit_purchasePrice" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Purchase Price</label>
-							<input type="number" name="purchasePrice" id="edit_purchasePrice" bind:value={purchasePrice} required class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" />
-						</div>
-						<div class="space-y-1.5">
-							<label for="edit_cashPrice" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Sale Price</label>
-							<input type="number" name="cashPrice" id="edit_cashPrice" bind:value={cashPrice} required class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold" />
+							<label for="edit_cashPrice" class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Selling Price</label>
+							<input
+								type="number"
+								name="cashPrice"
+								id="edit_cashPrice"
+								bind:value={editSellingPrice}
+								min="1"
+								required
+								class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold"
+							/>
 						</div>
 					</div>
 				</div>

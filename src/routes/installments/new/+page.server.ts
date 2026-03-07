@@ -3,8 +3,41 @@ import { fail, redirect } from '@sveltejs/kit';
 import { serializeDecimals } from '$lib/utils';
 import type { Actions, PageServerLoad } from './$types';
 
+function roundCurrency(value: number) {
+    return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+function generateInstallments(planId: string, startDate: Date, durationMonths: number, totalAmount: number) {
+    const installments = [];
+    const totalCents = Math.round(totalAmount * 100);
+    const baseCents = Math.floor(totalCents / durationMonths);
+    const remainderCents = totalCents - (baseCents * durationMonths);
+
+    for (let i = 1; i <= durationMonths; i++) {
+        const dueDate = new Date(startDate);
+        dueDate.setMonth(dueDate.getMonth() + i);
+
+        const amountCents = i === durationMonths
+            ? baseCents + remainderCents
+            : baseCents;
+        const amount = amountCents / 100;
+
+        installments.push({
+            planId,
+            serialNumber: i,
+            month: dueDate.getMonth() + 1,
+            year: dueDate.getFullYear(),
+            amount,
+            pendingAmount: amount,
+            status: 'UNPAID',
+            dueDate
+        });
+    }
+
+    return installments;
+}
+
 export const load: PageServerLoad = async () => {
-    // Run both queries in PARALLEL — saves ~300ms per load
     const [customers, products] = await Promise.all([
         prisma.customer.findMany({
             where: { status: 'ACTIVE' },
@@ -16,8 +49,7 @@ export const load: PageServerLoad = async () => {
         prisma.product.findMany({
             select: {
                 id: true, name: true, category: true,
-                cashPrice: true, installmentPrice: true,
-                durationMonths: true, downPayment: true
+                cashPrice: true
             },
             orderBy: { name: 'asc' }
         })
@@ -59,26 +91,81 @@ export const actions: Actions = {
         const durationMonthsStr = data.get('durationMonths') as string;
         let durationMonths = parseInt(durationMonthsStr);
         if (isNaN(durationMonths) || durationMonths < 1) {
-            const prodDuration = parseInt(product.durationMonths?.toString() || '1');
-            durationMonths = prodDuration > 1 ? prodDuration : 12;
+            durationMonths = 12;
         }
 
         const downPaymentStr = data.get('downPayment') as string;
         let downPayment = parseFloat(downPaymentStr);
         if (isNaN(downPayment)) {
-            downPayment = parseFloat(product.downPayment?.toString() || '0');
+            downPayment = 0;
+        }
+        downPayment = roundCurrency(downPayment);
+
+        const installmentPercentageStr = data.get('installmentPercentage') as string;
+        let installmentPercentage = parseFloat(installmentPercentageStr);
+        if (isNaN(installmentPercentage)) {
+            installmentPercentage = 0;
+        }
+        installmentPercentage = roundCurrency(installmentPercentage);
+
+        const sellingPrice = roundCurrency(parseFloat(product.cashPrice?.toString() || '0'));
+        if (sellingPrice <= 0) {
+            return fail(400, { error: 'Selected product has no valid selling price' });
         }
 
-        const totalAmountStr = data.get('totalAmount') as string;
-        let totalAmount = parseFloat(totalAmountStr);
-        if (isNaN(totalAmount) || totalAmount <= 0) {
-            const prodInstallment = parseFloat(product.installmentPrice?.toString() || '0');
-            totalAmount = prodInstallment > 0 ? prodInstallment : parseFloat(product.cashPrice?.toString() || '0');
+        if (downPayment < 0) {
+            return fail(400, { error: 'Advance payment cannot be negative' });
         }
 
-        const remainingBalance = totalAmount - downPayment;
-        const monthlyAmount = durationMonths > 0 ? remainingBalance / durationMonths : 0;
+        if (installmentPercentage < 0) {
+            return fail(400, { error: 'Installment percentage cannot be negative' });
+        }
+
+        if (downPayment >= sellingPrice) {
+            return fail(400, { error: 'Advance payment must be less than the selling price' });
+        }
+
+        const balanceAfterAdvance = roundCurrency(sellingPrice - downPayment);
+        const installmentCharge = roundCurrency((balanceAfterAdvance * installmentPercentage) / 100);
+        const remainingBalance = roundCurrency(balanceAfterAdvance + installmentCharge);
+        const totalAmount = roundCurrency(downPayment + remainingBalance);
         const startDate = new Date(startDateStr);
+
+        if (Number.isNaN(startDate.getTime())) {
+            return fail(400, { error: 'Invalid agreement date' });
+        }
+
+        if (remainingBalance <= 0) {
+            return fail(400, { error: 'Remaining balance must be greater than zero' });
+        }
+
+        const normalizedSchedule = customSchedule && Array.isArray(customSchedule)
+            ? customSchedule.map((item, index) => {
+                const dueDate = new Date(item?.date);
+                const amount = roundCurrency(Number(item?.amount));
+                const serialNumber = Number(item?.serial) || (index + 1);
+
+                return {
+                    serialNumber,
+                    dueDate,
+                    amount
+                };
+            })
+            : null;
+
+        if (normalizedSchedule && normalizedSchedule.length > 0) {
+            const scheduledTotal = roundCurrency(
+                normalizedSchedule.reduce((sum, item) => sum + item.amount, 0)
+            );
+
+            if (normalizedSchedule.some((item) => Number.isNaN(item.dueDate.getTime()) || item.amount <= 0)) {
+                return fail(400, { error: 'Each installment must have a valid date and amount' });
+            }
+
+            if (Math.abs(scheduledTotal - remainingBalance) > 0.01) {
+                return fail(400, { error: 'Installment schedule must match the remaining balance' });
+            }
+        }
 
         try {
             await prisma.$transaction(async (tx: any) => {
@@ -94,47 +181,18 @@ export const actions: Actions = {
                     }
                 });
 
-                // Generate installments
-                const installments = [];
-                if (customSchedule && Array.isArray(customSchedule) && customSchedule.length > 0) {
-                    for (const item of customSchedule) {
-                        const dueDate = new Date(item.date);
-                        installments.push({
-                            planId: plan.id,
-                            serialNumber: item.serial,
-                            month: dueDate.getMonth() + 1,
-                            year: dueDate.getFullYear(),
-                            amount: Number(item.amount),
-                            pendingAmount: Number(item.amount),
-                            status: 'UNPAID',
-                            dueDate
-                        });
-                    }
-                } else {
-                    const baseMonthlyAmount = Math.floor(remainingBalance / durationMonths);
-                    const remainder = remainingBalance - (baseMonthlyAmount * durationMonths);
-
-                    for (let i = 1; i <= durationMonths; i++) {
-                        const dueDate = new Date(startDate);
-                        dueDate.setMonth(dueDate.getMonth() + i);
-
-                        // Add remainder to the last installment
-                        const amount = i === durationMonths
-                            ? baseMonthlyAmount + remainder
-                            : baseMonthlyAmount;
-
-                        installments.push({
-                            planId: plan.id,
-                            serialNumber: i,
-                            month: dueDate.getMonth() + 1,
-                            year: dueDate.getFullYear(),
-                            amount: amount,
-                            pendingAmount: amount,
-                            status: 'UNPAID',
-                            dueDate
-                        });
-                    }
-                }
+                const installments = normalizedSchedule && normalizedSchedule.length > 0
+                    ? normalizedSchedule.map((item) => ({
+                        planId: plan.id,
+                        serialNumber: item.serialNumber,
+                        month: item.dueDate.getMonth() + 1,
+                        year: item.dueDate.getFullYear(),
+                        amount: item.amount,
+                        pendingAmount: item.amount,
+                        status: 'UNPAID',
+                        dueDate: item.dueDate
+                    }))
+                    : generateInstallments(plan.id, startDate, durationMonths, remainingBalance);
 
                 await tx.installment.createMany({
                     data: installments
