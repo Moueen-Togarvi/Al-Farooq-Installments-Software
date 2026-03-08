@@ -26,8 +26,11 @@ function getMonthRangeInPK(monthValue: string) {
 export const load: PageServerLoad = async ({ url }) => {
     try {
         const today = getPKStartOfDay();
-        const tomorrow = new Date(today);
-        tomorrow.setUTCDate(today.getUTCDate() + 1);
+        const currentMonthValue = getDefaultMonthValue();
+        const {
+            monthStartUtc: currentMonthStartUtc,
+            nextMonthStartUtc: currentNextMonthStartUtc
+        } = getMonthRangeInPK(currentMonthValue);
         const requestedMonth = url.searchParams.get('month') || '';
         const selectedMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth)
             ? requestedMonth
@@ -39,7 +42,7 @@ export const load: PageServerLoad = async ({ url }) => {
             totalCustomers,
             activePlans,
             totalBalanceResult,
-            todayDue,
+            currentMonthUnpaidInstallments,
             monthlyPaymentsResult,
             monthlyAdvanceCollectionsResult,
             overdueInstallments
@@ -52,10 +55,15 @@ export const load: PageServerLoad = async ({ url }) => {
             }),
             prisma.installment.findMany({
                 where: {
-                    dueDate: { gte: today, lt: tomorrow }
+                    dueDate: { gte: currentMonthStartUtc, lt: currentNextMonthStartUtc },
+                    status: { not: 'PAID' }
                 },
                 select: {
-                    id: true, amount: true, status: true, dueDate: true,
+                    id: true,
+                    amount: true,
+                    pendingAmount: true,
+                    status: true,
+                    dueDate: true,
                     plan: {
                         select: {
                             id: true,
@@ -63,7 +71,9 @@ export const load: PageServerLoad = async ({ url }) => {
                             product: { select: { name: true } }
                         }
                     }
-                }
+                },
+                orderBy: { dueDate: 'asc' },
+                take: 12
             }),
             prisma.payment.aggregate({
                 where: {
@@ -119,7 +129,7 @@ export const load: PageServerLoad = async ({ url }) => {
             },
             selectedMonth,
             selectedMonthLabel,
-            todayDue,
+            currentMonthUnpaidInstallments,
             overdueInstallments
         });
     } catch (err: any) {
@@ -135,7 +145,7 @@ export const load: PageServerLoad = async ({ url }) => {
             },
             selectedMonth: getDefaultMonthValue(),
             selectedMonthLabel: 'Current Month',
-            todayDue: [],
+            currentMonthUnpaidInstallments: [],
             overdueInstallments: [],
             dbError: 'Database is currently reaching its limit or starting up. Please refresh in a moment.'
         };

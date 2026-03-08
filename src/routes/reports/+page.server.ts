@@ -43,13 +43,17 @@ export const load: PageServerLoad = async ({ url }: { url: URL }) => {
         summary.total = reportData.reduce((acc: number, curr: any) => acc + parseFloat(curr.amount.toString()), 0);
         summary.count = reportData.length;
     } else if (type === 'defaulters') {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const today = getPKStartOfDay();
 
         reportData = await prisma.installment.findMany({
             where: {
-                dueDate: { lt: today },
-                status: { not: 'PAID' }
+                status: { not: 'PAID' },
+                pendingAmount: { gt: 0 },
+                OR: [
+                    { dueDate: { lt: today } },
+                    { plan: { status: 'DEFAULTED' } },
+                    { plan: { customer: { status: 'DEFAULTER' } } }
+                ]
             },
             select: {
                 id: true,
@@ -58,6 +62,7 @@ export const load: PageServerLoad = async ({ url }: { url: URL }) => {
                 plan: {
                     select: {
                         id: true,
+                        status: true,
                         customer: { select: { name: true } },
                         product: { select: { name: true } }
                     }

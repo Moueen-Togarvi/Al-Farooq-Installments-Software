@@ -71,8 +71,8 @@ export const load: PageServerLoad = async () => {
             const currentMonthBucket = hasCurrentMonthUnpaid
                 ? 0
                 : hasCurrentMonthInstallment
-                    ? 1
-                    : 2;
+                    ? 2
+                    : 1;
 
             return {
                 ...plan,

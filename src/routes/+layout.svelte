@@ -8,7 +8,7 @@
 		CalendarRange, 
 		WalletCards, 
 		BarChart3, 
-		PiggyBank,
+		HandCoins,
 		LogOut,
 		Menu,
 		X,
@@ -19,13 +19,13 @@
 	let isSidebarOpen = $state(false);
 
 	const navigation = [
-		{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-		{ name: 'Customers', href: '/customers', icon: Users },
-		{ name: 'Products', href: '/products', icon: Package },
-		{ name: 'Installments', href: '/installments', icon: CalendarRange },
-		{ name: 'Payments', href: '/payments', icon: WalletCards },
-		{ name: 'Investments', href: '/investments', icon: PiggyBank },
-		{ name: 'Reports', href: '/reports', icon: BarChart3 },
+		{ name: 'Dashboard', mobileLabel: 'Dash', href: '/dashboard', icon: LayoutDashboard },
+		{ name: 'Customers', mobileLabel: 'Cust', href: '/customers', icon: Users },
+		{ name: 'Products', mobileLabel: 'Prod', href: '/products', icon: Package },
+		{ name: 'Installments', mobileLabel: 'Inst', href: '/installments', icon: CalendarRange },
+		{ name: 'Payments', mobileLabel: 'Pay', href: '/payments', icon: WalletCards },
+		{ name: 'Investments', mobileLabel: 'Fund', href: '/investments', icon: HandCoins },
+		{ name: 'Reports', mobileLabel: 'Rpt', href: '/reports', icon: BarChart3 },
 	];
 
 	function toggleSidebar() {
@@ -149,20 +149,20 @@
 
 		<!-- Mobile Bottom Navigation (App-like) -->
 		<nav class="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-50 safe-area-pb shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-			<div class="flex items-center justify-between px-2 py-2 overflow-x-auto gap-2 scrollbar-none">
-				{#each navigation as item} <!-- Show all items -->
+			<div class="grid grid-cols-7 px-1 py-1.5">
+				{#each navigation as item}
 					<a
 						href={item.href}
 						data-sveltekit-preload-data="tap"
-						class="flex flex-col items-center justify-center w-full gap-1 p-1.5 rounded-xl transition-all {page.url.pathname.startsWith(item.href) ? 'text-gray-900 scale-105' : 'text-gray-400 hover:text-gray-600'}"
+						class="flex min-w-0 flex-col items-center justify-center gap-0.5 py-1 rounded-lg transition-colors {page.url.pathname.startsWith(item.href) ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}"
 					>
-						<div class="relative p-1">
-							<item.icon class="w-5 h-5 {page.url.pathname.startsWith(item.href) ? 'text-gray-900 stroke-[2.5px]' : ''}" />
+						<div class="relative p-0.5">
+							<item.icon class="w-4 h-4 {page.url.pathname.startsWith(item.href) ? 'text-gray-900 stroke-[2.4px]' : ''}" />
 							{#if page.url.pathname.startsWith(item.href)}
-								<div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-gray-900 rounded-full"></div>
+								<div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-gray-900 rounded-full"></div>
 							{/if}
 						</div>
-						<span class="text-[9px] font-bold uppercase tracking-wider">{item.name}</span>
+						<span class="w-full text-center truncate text-[7px] leading-none font-black uppercase tracking-tight">{item.mobileLabel}</span>
 					</a>
 				{/each}
 			</div>

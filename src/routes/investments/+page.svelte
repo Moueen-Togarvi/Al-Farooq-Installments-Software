@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import {
-		PiggyBank,
+		HandCoins,
 		Users,
 		DollarSign,
 		TrendingDown,
 		ArrowDownCircle,
+		Calendar,
 		Search,
 		Filter
 	} from 'lucide-svelte';
@@ -42,6 +43,14 @@
 
 	function isIncoming(type: string) {
 		return type === 'INVESTOR_DEPOSIT' || type === 'INSTALLMENT_COLLECTION';
+	}
+
+	function installmentStatusColor(status: string) {
+		switch (status) {
+			case 'PAID': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+			case 'PARTIAL': return 'bg-amber-50 text-amber-700 border-amber-200';
+			default: return 'bg-red-50 text-red-700 border-red-200';
+		}
 	}
 
 	function monthKey(value: any) {
@@ -97,6 +106,10 @@
 			return matchesSearch && matchesType && matchesInvestor && matchesMonth;
 		})
 	);
+
+	const currentMonthUnpaidCount = $derived(
+		data.currentMonthInstallments.filter((item: any) => item.status !== 'PAID').length
+	);
 </script>
 
 <div class="space-y-6">
@@ -115,7 +128,7 @@
 		<div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
 			<div class="flex items-center justify-between">
 				<p class="text-[10px] font-black uppercase tracking-widest text-gray-500">Available Balance</p>
-				<PiggyBank class="w-4 h-4 text-gray-400" />
+				<HandCoins class="w-4 h-4 text-gray-400" />
 			</div>
 			<p class="text-xl font-black mt-3 text-gray-900">{formatCurrency(data.account.availableBalance)}</p>
 		</div>
@@ -139,6 +152,74 @@
 				<TrendingDown class="w-4 h-4 text-red-500" />
 			</div>
 			<p class="text-xl font-black mt-3 text-red-600">{formatCurrency(data.account.totalSpent)}</p>
+		</div>
+	</div>
+
+	<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+		<div class="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+			<h2 class="text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
+				<Calendar class="w-4 h-4" />
+				Current Month Installments
+			</h2>
+			<p class="text-[10px] font-black uppercase tracking-widest text-gray-500">
+				Unpaid First: {currentMonthUnpaidCount} Pending
+			</p>
+		</div>
+		<div class="hidden md:block overflow-x-auto">
+			<table class="w-full text-left min-w-[820px]">
+				<thead class="bg-gray-50 border-b border-gray-200">
+					<tr>
+						<th class="px-5 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Bill</th>
+						<th class="px-5 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Customer</th>
+						<th class="px-5 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Investor</th>
+						<th class="px-5 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Due Date</th>
+						<th class="px-5 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500 text-right">Pending</th>
+						<th class="px-5 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500 text-center">Status</th>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-gray-100">
+					{#each data.currentMonthInstallments as installment}
+						<tr class="hover:bg-gray-50">
+							<td class="px-5 py-3 text-xs font-black text-gray-800">{formatBillNumber(installment.plan?.billNumber)}</td>
+							<td class="px-5 py-3 text-sm font-black text-gray-900">{installment.plan?.customer?.name || '-'}</td>
+							<td class="px-5 py-3 text-sm font-bold text-gray-700">{installment.plan?.investor?.name || 'Unassigned'}</td>
+							<td class="px-5 py-3 text-xs font-bold text-gray-500">{new Date(installment.dueDate).toLocaleDateString()}</td>
+							<td class="px-5 py-3 text-sm font-black text-right {installment.status === 'PAID' ? 'text-emerald-600' : 'text-red-600'}">
+								{formatCurrency(installment.pendingAmount)}
+							</td>
+							<td class="px-5 py-3 text-center">
+								<span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest border {installmentStatusColor(installment.status)}">
+									{installment.status}
+								</span>
+							</td>
+						</tr>
+					{:else}
+						<tr>
+							<td colspan="6" class="px-5 py-10 text-center text-sm font-bold text-gray-500">No installments found for current month.</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+		<div class="md:hidden p-3 space-y-2">
+			{#each data.currentMonthInstallments as installment}
+				<div class="rounded-lg border border-gray-200 bg-gray-50/60 p-3 space-y-2">
+					<div class="flex items-center justify-between gap-2">
+						<p class="text-xs font-black text-gray-900">{formatBillNumber(installment.plan?.billNumber)}</p>
+						<span class="px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border {installmentStatusColor(installment.status)}">
+							{installment.status}
+						</span>
+					</div>
+					<p class="text-sm font-black text-gray-900 leading-tight">{installment.plan?.customer?.name || '-'}</p>
+					<div class="flex items-center justify-between text-[10px] font-bold text-gray-500">
+						<span>{new Date(installment.dueDate).toLocaleDateString()}</span>
+						<span class="{installment.status === 'PAID' ? 'text-emerald-600' : 'text-red-600'}">{formatCurrency(installment.pendingAmount)}</span>
+					</div>
+					<p class="text-[10px] font-black uppercase tracking-wider text-gray-500">Investor: {installment.plan?.investor?.name || 'Unassigned'}</p>
+				</div>
+			{:else}
+				<div class="px-2 py-8 text-center text-sm font-bold text-gray-500">No installments found for current month.</div>
+			{/each}
 		</div>
 	</div>
 
@@ -216,7 +297,7 @@
 				</select>
 			</div>
 		</div>
-		<div class="overflow-x-auto">
+		<div class="hidden md:block overflow-x-auto">
 			<table class="w-full text-left min-w-[760px]">
 				<thead class="bg-gray-50 border-b border-gray-200">
 					<tr>
@@ -251,6 +332,39 @@
 					{/each}
 				</tbody>
 			</table>
+		</div>
+		<div class="md:hidden p-3 space-y-2">
+			{#each filteredInvestors as investor}
+				<div class="rounded-lg border border-gray-200 bg-gray-50/60 p-3 space-y-2">
+					<div class="flex items-center justify-between gap-2">
+						<p class="text-sm font-black text-gray-900 leading-tight">{investor.name}</p>
+						<span class="px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border {investor.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-600 border-gray-200'}">
+							{investor.status}
+						</span>
+					</div>
+					<p class="text-[11px] font-bold text-gray-500">{investor.mobile || '-'}</p>
+					<div class="grid grid-cols-2 gap-2 text-[10px]">
+						<div>
+							<p class="font-black text-gray-400 uppercase tracking-wider">Deposited</p>
+							<p class="font-black text-emerald-600">{formatCurrency(investor.totalDeposited)}</p>
+						</div>
+						<div class="text-right">
+							<p class="font-black text-gray-400 uppercase tracking-wider">Collected</p>
+							<p class="font-black text-blue-600">{formatCurrency(investor.totalCollected)}</p>
+						</div>
+						<div>
+							<p class="font-black text-gray-400 uppercase tracking-wider">Total</p>
+							<p class="font-black text-gray-900">{formatCurrency(investor.totalContribution)}</p>
+						</div>
+						<div class="text-right">
+							<p class="font-black text-gray-400 uppercase tracking-wider">Active Plans</p>
+							<p class="font-black text-gray-900">{investor._count.plans}</p>
+						</div>
+					</div>
+				</div>
+			{:else}
+				<div class="px-2 py-8 text-center text-sm font-bold text-gray-500">No investors match current filters.</div>
+			{/each}
 		</div>
 	</div>
 
@@ -312,7 +426,7 @@
 				</button>
 			</div>
 		</div>
-		<div class="overflow-x-auto">
+		<div class="hidden md:block overflow-x-auto">
 			<table class="w-full text-left min-w-[860px]">
 				<thead class="bg-gray-50 border-b border-gray-200">
 					<tr>
@@ -351,6 +465,32 @@
 					{/each}
 				</tbody>
 			</table>
+		</div>
+		<div class="md:hidden p-3 space-y-2">
+			{#each filteredTransactions as txn}
+				<div class="rounded-lg border border-gray-200 bg-gray-50/60 p-3 space-y-2">
+					<div class="flex items-center justify-between gap-2">
+						<p class="text-[10px] font-black uppercase tracking-widest text-gray-600">{transactionTypeLabel(txn.type)}</p>
+						<p class="text-xs font-black {isIncoming(txn.type) ? 'text-emerald-600' : 'text-red-600'}">
+							{isIncoming(txn.type) ? '+' : '-'}{formatCurrency(txn.amount)}
+						</p>
+					</div>
+					<p class="text-xs font-bold text-gray-700">{txn.investor?.name || 'Unassigned'}</p>
+					<p class="text-[11px] font-bold text-gray-500 leading-tight">
+						{#if txn.plan}
+							Bill {formatBillNumber(txn.plan.billNumber)} ({txn.plan.customer?.name || 'Unknown'})
+						{:else if txn.product}
+							Product: {txn.product.name}
+						{:else}
+							-
+						{/if}
+					</p>
+						<p class="text-[10px] font-semibold text-gray-500">{txn.note || '-'}</p>
+					<p class="text-[10px] font-bold text-gray-400">{new Date(txn.createdAt).toLocaleString()}</p>
+				</div>
+			{:else}
+				<div class="px-2 py-8 text-center text-sm font-bold text-gray-500">No transactions match current filters.</div>
+			{/each}
 		</div>
 	</div>
 </div>

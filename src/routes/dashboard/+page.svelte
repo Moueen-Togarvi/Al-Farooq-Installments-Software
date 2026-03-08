@@ -6,7 +6,7 @@
 		DollarSign,
 		CheckCircle2,
 		ShieldCheck,
-		PiggyBank
+		HandCoins
 	} from 'lucide-svelte';
 
 	let { data } = $props();
@@ -22,7 +22,7 @@
 	const statsCards = $derived([
 		{ name: 'Total Customers', value: data.stats.totalCustomers, icon: Users },
 		{ name: 'Active Plans', value: data.stats.activePlans, icon: ShieldCheck },
-		{ name: 'Investment Balance', value: formatCurrency(data.stats.investmentBalance), icon: PiggyBank },
+		{ name: 'Investment Balance', value: formatCurrency(data.stats.investmentBalance), icon: HandCoins },
 		{ name: `Collected (${data.selectedMonthLabel})`, value: formatCurrency(data.stats.totalCollectedThisMonth), icon: DollarSign },
 		{ name: 'Pending Balance', value: formatCurrency(data.stats.totalPending), icon: AlertTriangle },
 	]);
@@ -91,23 +91,23 @@
 	</div>
 
 	<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-		<!-- Due Today Section -->
+		<!-- Current Month Unpaid -->
 		<div class="bg-white rounded-xl shadow-sm border-2 border-gray-200 flex flex-col overflow-hidden">
 			<div class="px-6 py-5 border-b-2 border-gray-100 flex items-center justify-between bg-gray-50">
 				<h3 class="text-base font-black text-black flex items-center gap-2 uppercase tracking-wide">
 					<Calendar class="w-5 h-5 text-black" />
-					Installments Due Today
+					Current Month Unpaid
 				</h3>
-				{#if data.todayDue.length > 0}
+				{#if data.currentMonthUnpaidInstallments.length > 0}
 					<span class="bg-black text-white text-[10px] font-black px-2.5 py-1 rounded-md tracking-widest uppercase">
-						{data.todayDue.filter((i: any) => i.status !== 'PAID').length} REMAINING
+						{data.currentMonthUnpaidInstallments.length} REMAINING
 					</span>
 				{/if}
 			</div>
 			
 			<div class="flex-1 divide-y-2 divide-gray-100">
-				{#each data.todayDue as item}
-					<div class="px-6 py-4 hover:bg-gray-50 transition-colors flex items-center justify-between group {item.status === 'PAID' ? 'opacity-75' : ''}">
+				{#each data.currentMonthUnpaidInstallments as item}
+					<div class="px-6 py-4 hover:bg-gray-50 transition-colors flex items-center justify-between group">
 						<div class="flex items-center gap-4">
 							<div class="w-10 h-10 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center text-sm font-black text-black shrink-0">
 								{item.plan?.customer?.name ? item.plan.customer.name.substring(0, 2).toUpperCase() : 'NA'}
@@ -116,21 +116,19 @@
 								<p class="text-sm font-black text-black">{item.plan?.customer?.name || 'Unknown'}</p>
 								<div class="flex items-center gap-2 mt-0.5">
 									<p class="text-xs font-bold text-gray-500">{item.plan?.product?.name || 'Unknown'}</p>
-									{#if item.status === 'PAID'}
-										<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 text-[8px] font-black text-emerald-700 uppercase tracking-tighter">
-											<CheckCircle2 class="w-2.5 h-2.5" /> PAID
-										</span>
-									{/if}
+									<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-100 text-[8px] font-black text-amber-700 uppercase tracking-tighter">
+										PENDING
+									</span>
 								</div>
 							</div>
 						</div>
 						<div class="text-right flex flex-col items-end">
-							<p class="text-sm font-black text-black {item.status === 'PAID' ? 'line-through text-gray-400' : ''}">{formatCurrency(item.amount)}</p>
+							<p class="text-sm font-black text-red-600">{formatCurrency(item.pendingAmount ?? item.amount)}</p>
 							<a 
 								href="/installments/{item.plan?.id}" 
 								class="px-3 py-1 bg-gray-100 text-[10px] font-black text-black hover:bg-black hover:text-white transition-colors mt-2 text-center rounded inline-block uppercase tracking-wider"
 							>
-								{item.status === 'PAID' ? 'View Ledger' : 'Take Payment'}
+								Take Payment
 							</a>
 						</div>
 					</div>
@@ -138,15 +136,15 @@
 					<div class="py-16 flex flex-col items-center justify-center text-center px-6">
 						<CheckCircle2 class="w-10 h-10 text-gray-300 mb-3" />
 						<p class="text-sm font-black text-black uppercase tracking-wide">All Caught Up</p>
-						<p class="text-xs font-bold text-gray-500 mt-1">No installments are due for collection today.</p>
+						<p class="text-xs font-bold text-gray-500 mt-1">No unpaid installments in the current month.</p>
 					</div>
 				{/each}
 			</div>
 			
-			{#if data.todayDue.length > 0}
+			{#if data.currentMonthUnpaidInstallments.length > 0}
 				<div class="px-6 py-4 border-t-2 border-gray-100 bg-gray-50 text-center">
 					<button class="text-xs font-black text-gray-500 hover:text-black transition-colors uppercase tracking-widest">
-						Print Collection Sheet
+						Print Monthly Collection Sheet
 					</button>
 				</div>
 			{/if}

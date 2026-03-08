@@ -1,15 +1,23 @@
 import { prisma } from '$lib/server/prisma';
 import { addInvestorDeposit, ensureInvestmentAccount, InvestmentValidationError } from '$lib/server/investment';
 import { fail } from '@sveltejs/kit';
-import { serializeDecimals } from '$lib/utils';
+import { serializeDecimals, getPKDate } from '$lib/utils';
 import type { Actions, PageServerLoad } from './$types';
+
+const PK_OFFSET_MS = 5 * 60 * 60 * 1000;
 
 function roundCurrency(value: number) {
     return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
 export const load: PageServerLoad = async () => {
-    const [account, investors, transactions, deposits, collections] = await Promise.all([
+    const pkNow = getPKDate();
+    const currentYear = pkNow.getUTCFullYear();
+    const currentMonthIndex = pkNow.getUTCMonth();
+    const currentMonthStartUtc = new Date(Date.UTC(currentYear, currentMonthIndex, 1) - PK_OFFSET_MS);
+    const nextMonthStartUtc = new Date(Date.UTC(currentYear, currentMonthIndex + 1, 1) - PK_OFFSET_MS);
+
+    const [account, investors, transactions, currentMonthInstallments, deposits, collections] = await Promise.all([
         ensureInvestmentAccount(prisma),
         prisma.investor.findMany({
             select: {
@@ -28,7 +36,7 @@ export const load: PageServerLoad = async () => {
             ]
         }),
         prisma.investmentTransaction.findMany({
-            take: 300,
+            take: 120,
             orderBy: { createdAt: 'desc' },
             select: {
                 id: true,
@@ -48,6 +56,31 @@ export const load: PageServerLoad = async () => {
                 },
                 product: {
                     select: { id: true, name: true }
+                }
+            }
+        }),
+        prisma.installment.findMany({
+            where: {
+                dueDate: { gte: currentMonthStartUtc, lt: nextMonthStartUtc }
+            },
+            orderBy: { dueDate: 'asc' },
+            take: 120,
+            select: {
+                id: true,
+                status: true,
+                amount: true,
+                receivedAmount: true,
+                pendingAmount: true,
+                dueDate: true,
+                paymentDate: true,
+                plan: {
+                    select: {
+                        id: true,
+                        billNumber: true,
+                        customer: { select: { name: true } },
+                        product: { select: { name: true } },
+                        investor: { select: { id: true, name: true } }
+                    }
                 }
             }
         }),
@@ -87,10 +120,28 @@ export const load: PageServerLoad = async () => {
         };
     });
 
+    const sortedCurrentMonthInstallments = currentMonthInstallments.sort((a: any, b: any) => {
+        const aIsUnpaid = a.status !== 'PAID';
+        const bIsUnpaid = b.status !== 'PAID';
+
+        if (aIsUnpaid !== bIsUnpaid) {
+            return Number(bIsUnpaid) - Number(aIsUnpaid);
+        }
+
+        if (aIsUnpaid && bIsUnpaid) {
+            return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        }
+
+        const aPaymentTime = a.paymentDate ? new Date(a.paymentDate).getTime() : 0;
+        const bPaymentTime = b.paymentDate ? new Date(b.paymentDate).getTime() : 0;
+        return bPaymentTime - aPaymentTime;
+    });
+
     return serializeDecimals({
         account,
         investors: investorStats,
-        transactions
+        transactions,
+        currentMonthInstallments: sortedCurrentMonthInstallments
     });
 };
 
