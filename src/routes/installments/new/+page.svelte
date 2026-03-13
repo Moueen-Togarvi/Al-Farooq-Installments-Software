@@ -183,17 +183,31 @@
 							placeholder="Search by name, CNIC or mobile..."
 							bind:value={customerSearchQuery}
 							onfocus={() => showCustomerDropdown = true}
-							onblur={() => setTimeout(() => showCustomerDropdown = false, 200)}
+							onblur={() => {
+								console.count('CustomerDropdown:onblur');
+								setTimeout(() => {
+									console.log('CustomerDropdown:hiding');
+									showCustomerDropdown = false;
+								}, 300);
+							}}
 							class="w-full px-3 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none transition-colors text-gray-900 text-sm font-bold placeholder-gray-400"
 						/>
 
 						{#if showCustomerDropdown && filteredCustomers.length > 0}
-							<div class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+							<div class="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
 								{#each filteredCustomers as customer}
 									<button
 										type="button"
 										class="w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 focus:bg-gray-50 outline-none transition-colors last:border-0"
+										onpointerdown={(e) => {
+											e.preventDefault();
+											console.log('CustomerDropdown:onpointerdown', { id: customer.id, name: customer.name });
+											selectedCustomerId = customer.id;
+											customerSearchQuery = `${customer.name} - ${customer.cnic}`;
+											showCustomerDropdown = false;
+										}}
 										onclick={() => {
+											console.log('CustomerDropdown:onclick', { id: customer.id, name: customer.name });
 											selectedCustomerId = customer.id;
 											customerSearchQuery = `${customer.name} - ${customer.cnic}`;
 											showCustomerDropdown = false;
